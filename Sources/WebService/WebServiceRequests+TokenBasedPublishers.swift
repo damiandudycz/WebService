@@ -7,18 +7,49 @@
 
 import Foundation
 import Combine
+import HandyThings
 
-extension WebService {
+public extension WebService {
     
-    public func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable>(endpoint: String, method: URLRequest.HTTPMethod, token: Token, parameters: BodyParameters?, urlParameters: DictionaryRepresentable? = nil) -> AnyPublisher<Result, RequestError> {
+    // MARK: - Public
+    
+    func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable>(
+        endpoint:      String,
+        method:        URLRequest.HTTPMethod,
+        token:         Token,
+        parameters:    BodyParameters?,
+        urlParameters: DictionaryRepresentable? = nil
+    ) -> RequestPublisher<Result> {
+        
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, parameters: parameters, urlParameters: urlParameters, using: requestPublisher)
     }
     
-    public func tokenBasedMethodVoidPublisher<BodyParameters: Encodable>(endpoint: String, method: URLRequest.HTTPMethod, token: Token, parameters: BodyParameters?, urlParameters: DictionaryRepresentable? = nil) -> AnyPublisher<Void, RequestError> {
+    func tokenBasedMethodVoidPublisher<BodyParameters: Encodable>(
+        endpoint:      String,
+        method:        URLRequest.HTTPMethod,
+        token:         Token,
+        parameters:    BodyParameters?,
+        urlParameters: DictionaryRepresentable? = nil
+    ) -> RequestPublisher<Void> {
+        
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, parameters: parameters, urlParameters: urlParameters, using: requestPublisherVoid)
     }
+        
+}
+
+private extension WebService {
+
+    // MARK: - Private
     
-    private func createTokenBasedMethodPublisher<Result, BodyParameters: Encodable>(endpoint: String, method: URLRequest.HTTPMethod, token: Token, parameters: BodyParameters?, urlParameters: DictionaryRepresentable? = nil, using creator: (_ request: URLRequest) -> AnyPublisher<Result, RequestError>) -> AnyPublisher<Result, RequestError> {
+    func createTokenBasedMethodPublisher<Result, BodyParameters: Encodable>(
+        endpoint:      String,
+        method:        URLRequest.HTTPMethod,
+        token:         Token,
+        parameters:    BodyParameters?,
+        urlParameters: DictionaryRepresentable? = nil,
+        using creator: RequestPublisherCreator<Result>
+    ) -> RequestPublisher<Result> {
+        
         do {
             let urlParametersDictionary = try { (_ parameters: DictionaryRepresentable?) -> [String : CustomStringConvertible]? in
                 guard let parameters = parameters else { return nil }
@@ -28,10 +59,12 @@ extension WebService {
             return creator(request)
         }
         catch {
-            if let error = error as? RequestError { return Fail<Result, RequestError>(error: error).eraseToAnyPublisher() }
+            if let error = error as? RequestError {
+                return Fail<Result, RequestError>(error: error).eraseToAnyPublisher()
+            }
             return Fail<Result, RequestError>(error: .otherError(error: error)).eraseToAnyPublisher()
         }
 
     }
-    
+
 }
