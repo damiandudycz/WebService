@@ -9,10 +9,8 @@
 import Foundation
 import Combine
 
-open class WebService {
+open class WebService<APIErrorType: Decodable> {
     
-    let queue = DispatchQueue(label: "aaa")
-
     private let baseURL: URL
     private var cancellables = Set<AnyCancellable>()
     
@@ -93,8 +91,8 @@ public extension WebService {
                     return try JSONDecoder().decode(ResultType.self, from: data)
                 }
                 catch {
-                    if let decodedErrors = try? JSONDecoder().decode(APIErrorsResponse.self, from: data) {
-                        throw RequestError.apiErrors(errors: decodedErrors.errors)
+                    if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
+                        throw RequestError.apiError(error: decodedError, response: response)
                     }
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
@@ -118,8 +116,8 @@ public extension WebService {
     func requestPublisherVoid(for request: URLRequest) -> RequestPublisher<Void> {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap({ (data, response) -> Void in
-                if let decodedErrors = try? JSONDecoder().decode(APIErrorsResponse.self, from: data) {
-                    throw RequestError.apiErrors(errors: decodedErrors.errors)
+                if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
+                    throw RequestError.apiError(error: decodedError, response: response)
                 }
                 guard let response = response as? HTTPURLResponse else {
                     throw RequestError.failedToReadResponse
