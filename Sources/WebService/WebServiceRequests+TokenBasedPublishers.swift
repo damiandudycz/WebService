@@ -15,7 +15,7 @@ public extension WebService {
     
     func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable>(
         endpoint:      String,
-        bodyContent:   BodyParameters?,
+        bodyContent:   BodyParameters?, // TODO: Try remove the need for this with EmptyBodyContent.null
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         token:         Token
@@ -60,9 +60,9 @@ private extension WebService {
         }
         catch {
             if let error = error as? RequestError {
-                return Fail<Result, RequestError>(error: error).eraseToAnyPublisher()
+                return Fail(error: error).eraseToAnyPublisher()
             }
-            return Fail<Result, RequestError>(error: .otherError(error: error)).eraseToAnyPublisher()
+            return Fail(error: .otherError(error: error)).eraseToAnyPublisher()
         }
 
     }
