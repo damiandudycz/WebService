@@ -11,6 +11,9 @@ import Combine
 
 open class WebService {
     
+    let queue = DispatchQueue(label: "aaa")
+    let semaphore = DispatchSemaphore(value: 1)
+
     private let baseURL: URL
     private var cancellables = Set<AnyCancellable>()
     
@@ -149,19 +152,25 @@ public extension WebService {
             return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
         }
         return Future<Token, RequestError> { (promise) in
-            if token.accessToken.isExpired {
-                print("Need new token...")
-                tokenRefreshPublisher(token).sink(receiveCompletion: { (completion) in
-                    switch completion {
-                    case .finished: promise(.success(token))
-                    case .failure(let error): promise(.failure(error))
-                    }
-                }) { (newToken) in
-                    token.updateTo(newToken)
-                }.store(in: &self.cancellables)
-            }
-            else {
-                promise(.success(token))
+            // TODO: Try to protect the order some other way.
+            self.queue.async {
+                self.semaphore.wait() // TODO: Test how this behave in various situations, and if this doesnt block main thread. Maybe it needs to be called in some queue.
+                if token.accessToken.isExpired {
+                    print("Need new token...")
+                    tokenRefreshPublisher(token).sink(receiveCompletion: { (completion) in
+                        switch completion {
+                        case .finished: promise(.success(token))
+                        case .failure(let error): promise(.failure(error))
+                        }
+                        self.semaphore.signal()
+                    }) { (newToken) in
+                        token.updateTo(newToken)
+                    }.store(in: &self.cancellables)
+                }
+                else {
+                    promise(.success(token))
+                    self.semaphore.signal()
+                }
             }
         }
         .flatMap { (_) -> RequestPublisher<PublisherType> in
