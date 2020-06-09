@@ -133,9 +133,9 @@ public extension WebService {
     /// This function will automatically obtain and store new access token if current token is expired.
     func publisherWithFreshToken<PublisherType, ParametersType>(
         _ function:            @escaping FreshTokenBasedMethodCreator<PublisherType, ParametersType>,
-        tokenRefreshPublisher: @escaping TokenRefreshCreator,
+        parameters:            ParametersType,
         token:                 Token?,
-        parameters:            ParametersType
+        tokenRefreshPublisher: @escaping TokenRefreshCreator
     ) -> RequestPublisher<PublisherType> {
         guard let token = token else {
             return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
@@ -166,7 +166,7 @@ public extension WebService {
         token:                 Token?,
         tokenRefreshPublisher: @escaping TokenRefreshCreator
     ) -> RequestPublisher<PublisherType> {
-        publisherWithFreshToken(function, tokenRefreshPublisher: tokenRefreshPublisher, token: token, parameters: .empty)
+        publisherWithFreshToken(function, parameters: .empty, token: token, tokenRefreshPublisher: tokenRefreshPublisher)
     }
     
 }

@@ -15,10 +15,10 @@ public extension WebService {
     
     func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable>(
         endpoint:      String,
-        method:        URLRequest.HTTPMethod,
-        token:         Token,
         parameters:    BodyParameters?,
-        urlParameters: DictionaryRepresentable? = nil
+        urlParameters: DictionaryRepresentable? = nil,
+        method:        URLRequest.HTTPMethod,
+        token:         Token
     ) -> RequestPublisher<Result> {
         
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, parameters: parameters, urlParameters: urlParameters, using: requestPublisher)
@@ -26,10 +26,10 @@ public extension WebService {
     
     func tokenBasedMethodVoidPublisher<BodyParameters: Encodable>(
         endpoint:      String,
-        method:        URLRequest.HTTPMethod,
-        token:         Token,
         parameters:    BodyParameters?,
-        urlParameters: DictionaryRepresentable? = nil
+        urlParameters: DictionaryRepresentable? = nil,
+        method:        URLRequest.HTTPMethod,
+        token:         Token
     ) -> RequestPublisher<Void> {
         
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, parameters: parameters, urlParameters: urlParameters, using: requestPublisherVoid)
