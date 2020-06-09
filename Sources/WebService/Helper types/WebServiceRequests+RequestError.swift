@@ -10,9 +10,10 @@ import Foundation
 public extension WebService {
 
     enum RequestError: Error {
+        case failedToReadResponse
         case accessTokenNotAvaliable
         case accessTokenInvalid
-        case wrongResponseCode
+        case wrongResponseCode(code: Int)
         case apiErrors(errors: [APIErrorsResponse.APIErrors])
         case otherError(error: Error)
     }

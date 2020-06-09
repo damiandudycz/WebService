@@ -90,8 +90,12 @@ public extension WebService {
                     if let decodedErrors = try? JSONDecoder().decode(APIErrorsResponse.self, from: data) {
                         throw RequestError.apiErrors(errors: decodedErrors.errors)
                     }
-                    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                        throw RequestError.wrongResponseCode
+                    guard let response = response as? HTTPURLResponse else {
+                        throw RequestError.failedToReadResponse
+                    }
+                    let statusCode = response.statusCode
+                    guard statusCode == 200 else {
+                        throw RequestError.wrongResponseCode(code: statusCode)
                     }
                     throw RequestError.otherError(error: error)
                 }
@@ -111,8 +115,12 @@ public extension WebService {
                 if let decodedErrors = try? JSONDecoder().decode(APIErrorsResponse.self, from: data) {
                     throw RequestError.apiErrors(errors: decodedErrors.errors)
                 }
-                guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                    throw RequestError.wrongResponseCode
+                guard let response = response as? HTTPURLResponse else {
+                    throw RequestError.failedToReadResponse
+                }
+                let statusCode = response.statusCode
+                guard statusCode == 200 else {
+                    throw RequestError.wrongResponseCode(code: statusCode)
                 }
                 return ()
             })
@@ -156,7 +164,7 @@ public extension WebService {
                 promise(.success(token))
             }
         }
-        .flatMap { (_) -> AnyPublisher<PublisherType, RequestError> in
+        .flatMap { (_) -> RequestPublisher<PublisherType> in
             function(parameters, token)
         }.eraseToAnyPublisher()
     }
