@@ -77,7 +77,7 @@ public extension WebService {
     
     func requestPublisher<ResultType: Decodable>(for request: URLRequest) -> RequestPublisher<ResultType> {
         URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap({ (data, response) -> ResultType in
+            .tryMap { (data, response) -> ResultType in
                 do {
                     return try JSONDecoder().decode(ResultType.self, from: data)
                 }
@@ -94,19 +94,19 @@ public extension WebService {
                     }
                     throw RequestError.otherError(error: error)
                 }
-            })
-            .mapError({ (error) -> RequestError in
+            }
+            .mapError { (error) -> RequestError in
                 guard let requestError = error as? RequestError else {
                     return .otherError(error: error)
                 }
                 return requestError
-            })
+            }
             .eraseToAnyPublisher()
     }
     
     func requestPublisherVoid(for request: URLRequest) -> RequestPublisher<Void> {
         URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap({ (data, response) -> Void in
+            .tryMap { (data, response) -> Void in
                 if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
                     throw RequestError.apiError(error: decodedError, response: response)
                 }
@@ -118,13 +118,13 @@ public extension WebService {
                     throw RequestError.wrongResponseCode(code: statusCode)
                 }
                 return ()
-            })
-            .mapError({ (error) -> RequestError in
+            }
+            .mapError { (error) -> RequestError in
                 guard let requestError = error as? RequestError else {
                     return .otherError(error: error)
                 }
                 return requestError
-            })
+            }
             .eraseToAnyPublisher()
     }
     
