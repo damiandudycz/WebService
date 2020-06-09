@@ -134,38 +134,39 @@ public extension WebService {
     func publisherWithFreshToken<PublisherType, ParametersType>(
         _ function:            @escaping FreshTokenBasedMethodCreator<PublisherType, ParametersType>,
         tokenRefreshPublisher: @escaping TokenRefreshCreator,
+        token:                 Token?,
         parameters:            ParametersType
     ) -> RequestPublisher<PublisherType> {
-        guard var usedToken = Token.currentToken else {
+        guard let token = token else {
             return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
         }
         return Future<Token, RequestError> { (promise) in
-            if usedToken.accessToken.isExpired {
+            if token.accessToken.isExpired {
                 print("Need new token...")
-                tokenRefreshPublisher(usedToken).sink(receiveCompletion: { (completion) in
+                tokenRefreshPublisher(token).sink(receiveCompletion: { (completion) in
                     switch completion {
-                    case .finished: promise(.success(usedToken))
+                    case .finished: promise(.success(token))
                     case .failure(let error): promise(.failure(error))
                     }
-                }) { (token) in
-                    usedToken = token
-                    Token.currentToken = token
+                }) { (newToken) in
+                    token.updateTo(newToken)
                 }.store(in: &self.cancellables)
             }
             else {
-                promise(.success(usedToken))
+                promise(.success(token))
             }
         }
         .flatMap { (_) -> AnyPublisher<PublisherType, RequestError> in
-            function(parameters, usedToken)
+            function(parameters, token)
         }.eraseToAnyPublisher()
     }
     
     func publisherWithFreshToken<PublisherType>(
         _ function:            @escaping FreshTokenBasedMethodCreator<PublisherType, EmptyRequestParameters>,
+        token:                 Token?,
         tokenRefreshPublisher: @escaping TokenRefreshCreator
     ) -> RequestPublisher<PublisherType> {
-        publisherWithFreshToken(function, tokenRefreshPublisher: tokenRefreshPublisher, parameters: .empty)
+        publisherWithFreshToken(function, tokenRefreshPublisher: tokenRefreshPublisher, token: token, parameters: .empty)
     }
     
 }

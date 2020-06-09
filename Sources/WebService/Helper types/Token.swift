@@ -8,31 +8,14 @@
 
 import Foundation
 
-public class Token: Codable {
+open class Token: Codable {
     
-    let accessToken: JWT
-    let refreshToken: String
+    private(set) var accessToken: JWT
+    private(set) var refreshToken: String
 
-}
-
-public extension Token {
-    
-    // TODO: Storing token in safe way.
-
-    static var currentToken: Token? = {
-        guard let tokenData = UserDefaults.standard.data(forKey: "token") else { return nil }
-        return try? JSONDecoder().decode(Token.self, from: tokenData)
-    }() {
-        didSet {
-            if let currentToken = currentToken {
-                if let data = try? JSONEncoder().encode(currentToken) {
-                    UserDefaults.standard.setValue(data, forKeyPath: "token")
-                }
-            }
-            else {
-                UserDefaults.standard.removeObject(forKey: "token")
-            }
-        }
+    open func updateTo(_ token: Token) {
+        self.accessToken = token.accessToken
+        self.refreshToken = token.refreshToken
     }
     
 }
