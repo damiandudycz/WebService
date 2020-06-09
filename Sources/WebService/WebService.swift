@@ -9,6 +9,8 @@
 import Foundation
 import Combine
 
+// TODO: Generics for JSONDecoder() and JSONEncoder()
+
 open class WebService<APIErrorType: Decodable> {
     
     private let baseURL: URL
@@ -32,9 +34,10 @@ private extension WebService {
 
 // Requests.
 public extension WebService {
-    
-    func request(
+        
+    func request<Parameters: Encodable>(
         for function:  String,
+        bodyContent:   Parameters?,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get
@@ -61,19 +64,9 @@ public extension WebService {
         if let token = token {
             request.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
-        return request
-    }
-    
-    func request<Parameters: Encodable>(
-        for function:  String,
-        bodyContent:   Parameters,
-        token:         Token? = nil,
-        urlParameters: [String : CustomStringConvertible]? = nil,
-        method:        URLRequest.HTTPMethod = .get
-    ) -> URLRequest {
-        
-        var request = self.request(for: function, urlParameters: urlParameters, token: token, method: method)
-        request.httpBody = try! JSONEncoder().encode(bodyContent)
+        if let bodyContent = bodyContent {
+            request.httpBody = try! JSONEncoder().encode(bodyContent)
+        }
         return request
     }
 
@@ -104,7 +97,7 @@ public extension WebService {
             })
             .mapError({ (error) -> RequestError in
                 guard let requestError = error as? RequestError else {
-                    return RequestError.otherError(error: error)
+                    return .otherError(error: error)
                 }
                 return requestError
             })
@@ -128,7 +121,7 @@ public extension WebService {
             })
             .mapError({ (error) -> RequestError in
                 guard let requestError = error as? RequestError else {
-                    return RequestError.otherError(error: error)
+                    return .otherError(error: error)
                 }
                 return requestError
             })
@@ -179,13 +172,5 @@ public extension WebService {
         
         return tokenVerification.flatMap { (_) in methodCreator(parameters, token) }.eraseToAnyPublisher()
     }
-    
-    func publisherWithFreshToken<PublisherType>(
-        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<PublisherType, EmptyBodyContent>,
-        token:               Token?,
-        tokenRefreshCreator: @escaping TokenRefreshCreator
-    ) -> RequestPublisher<PublisherType> {
-        publisherWithFreshToken(methodCreator, parameters: .empty, token: token, tokenRefreshCreator: tokenRefreshCreator)
-    }
-    
+        
 }
