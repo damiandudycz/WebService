@@ -14,7 +14,7 @@ public extension WebService {
         case accessTokenNotAvaliable
         case accessTokenInvalid
         case wrongResponseCode(code: Int)
-        case apiErrors(errors: [APIErrorsResponse.APIErrors])
+        case apiErrors(errors: [APIErrorsResponse.APIErrors]) // TODO: Move to UltronSDK
         case otherError(error: Error)
     }
 

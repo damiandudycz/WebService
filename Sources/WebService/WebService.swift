@@ -12,7 +12,6 @@ import Combine
 open class WebService {
     
     let queue = DispatchQueue(label: "aaa")
-    let semaphore = DispatchSemaphore(value: 1)
 
     private let baseURL: URL
     private var cancellables = Set<AnyCancellable>()
@@ -20,6 +19,8 @@ open class WebService {
     public init(_ baseURL: URL) {
         self.baseURL = baseURL
     }
+    
+    fileprivate var tokenUpdatePublisher: RequestPublisher<Token>?
     
 }
 
@@ -53,6 +54,8 @@ public extension WebService {
                 return self.url(for: function)
             }
         }()
+        
+        print("Created request: \(url)")
         
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
         request.method = method
@@ -143,47 +146,50 @@ public extension WebService {
     
     /// This function will automatically obtain and store new access token if current token is expired.
     func publisherWithFreshToken<PublisherType, ParametersType>(
-        _ function:            @escaping FreshTokenBasedMethodCreator<PublisherType, ParametersType>,
-        parameters:            ParametersType,
-        token:                 Token?,
-        tokenRefreshPublisher: @escaping TokenRefreshCreator
+        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<PublisherType, ParametersType>,
+        parameters:          ParametersType,
+        token:               Token?,
+        tokenRefreshCreator: @escaping TokenRefreshCreator
     ) -> RequestPublisher<PublisherType> {
         guard let token = token else {
             return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
         }
-        return Future<Token, RequestError> { (promise) in
-            // TODO: Try to protect the order some other way.
-            self.queue.async {
-                self.semaphore.wait() // TODO: Test how this behave in various situations, and if this doesnt block main thread. Maybe it needs to be called in some queue.
-                if token.accessToken.isExpired {
-                    print("Need new token...")
-                    tokenRefreshPublisher(token).sink(receiveCompletion: { (completion) in
+        
+        // Token verification checks if token needs to be updated. If it does it will create a tokenUpdatePublisher. Otherwise it will creare Just(token).
+        let tokenVerification: RequestPublisher<Token> = {
+            guard token.accessToken.isExpired else {
+                return Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
+            }
+            // If token updating publisher exists connect to it, otherwise create a new one.
+            guard let tokenUpdatePublisher = tokenUpdatePublisher else {
+                // Create new publisher
+                let tokenUpdatePublisher = Future<Token, RequestError> { (promise) in
+                    tokenRefreshCreator(token).sink(receiveCompletion: { (completion) in
+                        self.tokenUpdatePublisher = nil
                         switch completion {
                         case .finished: promise(.success(token))
                         case .failure(let error): promise(.failure(error))
                         }
-                        self.semaphore.signal()
                     }) { (newToken) in
+                        print("Token was updated to: \(newToken.accessToken)")
                         token.updateTo(newToken)
                     }.store(in: &self.cancellables)
-                }
-                else {
-                    promise(.success(token))
-                    self.semaphore.signal()
-                }
+                }.eraseToAnyPublisher()
+                self.tokenUpdatePublisher = tokenUpdatePublisher
+                return tokenUpdatePublisher
             }
-        }
-        .flatMap { (_) -> RequestPublisher<PublisherType> in
-            function(parameters, token)
-        }.eraseToAnyPublisher()
+            return tokenUpdatePublisher.eraseToAnyPublisher()
+        }()
+        
+        return tokenVerification.flatMap { (_) in methodCreator(parameters, token) }.eraseToAnyPublisher()
     }
     
     func publisherWithFreshToken<PublisherType>(
-        _ function:            @escaping FreshTokenBasedMethodCreator<PublisherType, EmptyRequestParameters>,
-        token:                 Token?,
-        tokenRefreshPublisher: @escaping TokenRefreshCreator
+        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<PublisherType, EmptyRequestParameters>,
+        token:               Token?,
+        tokenRefreshCreator: @escaping TokenRefreshCreator
     ) -> RequestPublisher<PublisherType> {
-        publisherWithFreshToken(function, parameters: .empty, token: token, tokenRefreshPublisher: tokenRefreshPublisher)
+        publisherWithFreshToken(methodCreator, parameters: .empty, token: token, tokenRefreshCreator: tokenRefreshCreator)
     }
     
 }
