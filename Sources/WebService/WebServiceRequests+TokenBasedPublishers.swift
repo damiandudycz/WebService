@@ -15,24 +15,24 @@ public extension WebService {
     
     func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable>(
         endpoint:      String,
-        parameters:    BodyParameters?,
+        bodyContent:   BodyParameters?,
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         token:         Token
     ) -> RequestPublisher<Result> {
         
-        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, parameters: parameters, urlParameters: urlParameters, using: requestPublisher)
+        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, urlParameters: urlParameters, using: requestPublisher)
     }
     
     func tokenBasedMethodVoidPublisher<BodyParameters: Encodable>(
         endpoint:      String,
-        parameters:    BodyParameters?,
+        bodyContent:   BodyParameters?,
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         token:         Token
     ) -> RequestPublisher<Void> {
         
-        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, parameters: parameters, urlParameters: urlParameters, using: requestPublisherVoid)
+        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, urlParameters: urlParameters, using: requestPublisherVoid)
     }
         
 }
@@ -45,7 +45,7 @@ private extension WebService {
         endpoint:      String,
         method:        URLRequest.HTTPMethod,
         token:         Token,
-        parameters:    BodyParameters?,
+        bodyContent:   BodyParameters?,
         urlParameters: DictionaryRepresentable? = nil,
         using creator: RequestPublisherCreator<Result>
     ) -> RequestPublisher<Result> {
@@ -55,7 +55,7 @@ private extension WebService {
                 guard let parameters = parameters else { return nil }
                 return try parameters.dictionary()
             }(urlParameters)
-            let request = self.request(for: endpoint, parameters: parameters, token: token, urlParameters: urlParametersDictionary, method: method)
+            let request = self.request(for: endpoint, bodyContent: bodyContent, token: token, urlParameters: urlParametersDictionary, method: method)
             return creator(request)
         }
         catch {

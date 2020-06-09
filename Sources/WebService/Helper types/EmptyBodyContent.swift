@@ -8,10 +8,10 @@
 import Foundation
 
 // Placeholder for no parameters.
-public enum EmptyRequestParameters: Encodable {
+public enum EmptyBodyContent: Encodable {
     
     case empty
     public func encode(to encoder: Encoder) throws {}
-    public static let null: EmptyRequestParameters? = nil
+    public static let null: EmptyBodyContent? = nil
     
 }

@@ -66,16 +66,14 @@ public extension WebService {
     
     func request<Parameters: Encodable>(
         for function:  String,
-        parameters:    Parameters? = nil,
+        bodyContent:   Parameters,
         token:         Token? = nil,
         urlParameters: [String : CustomStringConvertible]? = nil,
         method:        URLRequest.HTTPMethod = .get
     ) -> URLRequest {
         
         var request = self.request(for: function, urlParameters: urlParameters, token: token, method: method)
-        if let parameters = parameters {
-            request.httpBody = try! JSONEncoder().encode(parameters)
-        }
+        request.httpBody = try! JSONEncoder().encode(bodyContent)
         return request
     }
 
@@ -183,7 +181,7 @@ public extension WebService {
     }
     
     func publisherWithFreshToken<PublisherType>(
-        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<PublisherType, EmptyRequestParameters>,
+        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<PublisherType, EmptyBodyContent>,
         token:               Token?,
         tokenRefreshCreator: @escaping TokenRefreshCreator
     ) -> RequestPublisher<PublisherType> {
