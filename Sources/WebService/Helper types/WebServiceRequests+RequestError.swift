@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import HandyThings
 
 public extension WebService {
 
@@ -13,7 +14,7 @@ public extension WebService {
         case failedToReadResponse
         case accessTokenNotAvaliable
         case accessTokenInvalid
-        case wrongResponseCode(code: Int)
+        case wrongResponseStatus(status: URLResponse.ResponseStatus)
         case apiError(error: APIErrorType, response: URLResponse)
         case otherError(error: Error)
     }

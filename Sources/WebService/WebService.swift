@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import HandyThings
 
 // TODO: Generics for JSONDecoder() and JSONEncoder()
 
@@ -88,9 +89,9 @@ public extension WebService {
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
                     }
-                    let statusCode = response.statusCode
-                    guard statusCode == 200 else {
-                        throw RequestError.wrongResponseCode(code: statusCode)
+                    let status = response.status
+                    guard status.isSuccess else {
+                        throw RequestError.wrongResponseStatus(status: status)
                     }
                     throw RequestError.otherError(error: error)
                 }
@@ -113,9 +114,9 @@ public extension WebService {
                 guard let response = response as? HTTPURLResponse else {
                     throw RequestError.failedToReadResponse
                 }
-                let statusCode = response.statusCode
-                guard statusCode == 200 else {
-                    throw RequestError.wrongResponseCode(code: statusCode)
+                let status = response.status
+                guard status.isSuccess else {
+                    throw RequestError.wrongResponseStatus(status: status)
                 }
                 return ()
             }
