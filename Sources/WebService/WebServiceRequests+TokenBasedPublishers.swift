@@ -84,7 +84,7 @@ private extension WebService {
                 guard let parameters = parameters else { return nil }
                 return try parameters.dictionary()
             }(urlParameters)
-            let request = self.request(for: endpoint, bodyContent: bodyContent, urlParameters: urlParametersDictionary, token: token, method: method)
+            let request = try self.request(for: endpoint, bodyContent: bodyContent, urlParameters: urlParametersDictionary, token: token, method: method)
             return creator(request, decoder, errorDecoder)
         }
         catch {

@@ -64,7 +64,9 @@ public extension WebService {
             request.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
         if let bodyContent = bodyContent {
+            // TODO: Throw error instead of crashing.
             request.httpBody = try! bodyContent.encoder.encode(bodyContent.parameters)
+            print("Data: \(String(data: request.httpBody!, encoding: .utf8)!)")
         }
         return request
     }
