@@ -36,7 +36,7 @@ public extension WebService {
         
     func request(
         for function:  String,
-        body:          Data?,
+        body:          Data? = nil,
         contentType:   URLRequest.ContentType? = nil,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
@@ -94,18 +94,7 @@ public extension WebService {
                 
         return request
     }
-
-    // With no content.
-    func request(
-        for function:  String,
-        contentType:   URLRequest.ContentType? = nil,
-        urlParameters: [String : CustomStringConvertible]? = nil,
-        token:         Token? = nil,
-        method:        URLRequest.HTTPMethod = .get,
-        headers:       [URLRequest.Header]? = nil
-    ) -> URLRequest {
-        request(for: function, body: nil, contentType: contentType, urlParameters: urlParameters, token: token, method: method, headers: headers)
-    }
+    
 }
 
 // Request publishers.
@@ -143,15 +132,6 @@ public extension WebService {
             .eraseToAnyPublisher()
     }
     
-    func requestPublisher<ErrorDecoder: TopLevelDecoder>(for request: URLRequest, errorDecoder: ErrorDecoder) -> RequestPublisher<EmptyRequestResult> where ErrorDecoder.Input == Data {
-        requestPublisher(for: request, decoder: EmptyRequestResultDecoder.empty, errorDecoder: errorDecoder)
-    }
-
-    // Use this if you dont need to use error decoding.
-    func requestPublisher(for request: URLRequest) -> RequestPublisher<EmptyRequestResult> {
-        requestPublisher(for: request, decoder: EmptyRequestResultDecoder.empty, errorDecoder: UndefiniedAPIError.decoder)
-    }
-
 }
 
 // Request publishers for Token Based API.
