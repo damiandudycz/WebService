@@ -36,9 +36,9 @@ private extension WebService {
 // Requests.
 public extension WebService {
         
-    func request<Parameters: Encodable>(
+    func request<Parameters: Encodable, Encoder: RequestBodyEncoder>(
         for function:  String,
-        bodyContent:   Parameters?,
+        bodyContent:   (parameters: Parameters, encoder: Encoder)?,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get
@@ -66,7 +66,7 @@ public extension WebService {
             request.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
         if let bodyContent = bodyContent {
-            request.httpBody = try! JSONEncoder().encode(bodyContent)
+            request.httpBody = try! bodyContent.encoder.encode(bodyContent.parameters)
         }
         return request
     }
@@ -154,3 +154,10 @@ public extension WebService {
     }
         
 }
+
+
+public protocol RequestBodyEncoder {
+    func encode<T>(_ value: T) throws -> Data where T : Encodable
+}
+
+extension JSONEncoder: RequestBodyEncoder {}

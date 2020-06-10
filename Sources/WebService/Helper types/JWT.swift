@@ -46,12 +46,12 @@ private extension Token.JWT {
         
         let exp: TimeInterval
         
-        init(_ tokenString: String) throws {
+        init(_ jsonString: String) throws {
             func base64Decode(_ base64: String) -> Data? {
                 let padded = base64.padding(toLength: ((base64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
                 return Data(base64Encoded: padded)
             }
-            let segments = tokenString.components(separatedBy: ".")
+            let segments = jsonString.components(separatedBy: ".")
             let jwtSegment = segments[1]
             guard let bodyData = base64Decode(jwtSegment) else {
                 throw AccessSegmentError.failedToDecodeAccessSegment
