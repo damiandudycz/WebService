@@ -15,7 +15,7 @@ public extension WebService {
     
     func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable, Encoder: TopLevelEncoder, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
-        bodyContent:   (parameters: BodyParameters, encoder: Encoder),
+        bodyContent:   BodyContent<BodyParameters, Encoder>,
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         decoder:       Decoder,
@@ -41,7 +41,7 @@ public extension WebService {
 
     func tokenBasedMethodPublisher<BodyParameters: Encodable, Encoder: TopLevelEncoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
-        bodyContent:   (parameters: BodyParameters, encoder: Encoder),
+        bodyContent:   BodyContent<BodyParameters, Encoder>,
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         errorDecoder:  ErrorDecoder,
@@ -72,7 +72,7 @@ private extension WebService {
         endpoint:      String,
         method:        URLRequest.HTTPMethod,
         token:         Token,
-        bodyContent:   (parameters: BodyParameters, encoder: Encoder)?,
+        bodyContent:   BodyContent<BodyParameters, Encoder>?,
         decoder:       Decoder,
         errorDecoder:  ErrorDecoder,
         urlParameters: DictionaryRepresentable? = nil,

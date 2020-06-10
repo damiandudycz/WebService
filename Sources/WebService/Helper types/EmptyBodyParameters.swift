@@ -11,7 +11,7 @@ import Combine
 enum EmptyBodyContent {
 
     // Use this instead of simple nil, to resolve Generics when needed.
-    static let null: (parameters: Data, encoder: EmptyBodyContentEncoder)? = nil
+    static let null: BodyContent<Data, EmptyBodyContentEncoder>? = nil
     
     enum EmptyBodyContentEncoder: TopLevelEncoder {
         func encode<T>(_ value: T) throws -> Data where T : Encodable { fatalError() }

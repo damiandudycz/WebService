@@ -36,7 +36,7 @@ public extension WebService {
         
     func request<Parameters: Encodable, Encoder: TopLevelEncoder>(
         for function:  String,
-        bodyContent:   (parameters: Parameters, encoder: Encoder)?,
+        bodyContent:   BodyContent<Parameters, Encoder>?,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get
