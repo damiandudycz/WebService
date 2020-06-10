@@ -69,6 +69,7 @@ public extension WebService {
         return request
     }
 
+    // With no content.
     func request(
         for function:  String,
         urlParameters: [String : CustomStringConvertible]? = nil,
@@ -82,7 +83,7 @@ public extension WebService {
 // Request publishers.
 public extension WebService {
     
-    func requestPublisher<ResultType: Decodable, Decoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder) -> RequestPublisher<ResultType> where Decoder.Input == Data {
+    func requestPublisher<ResultType: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder, errorDecoder: ErrorDecoder) -> RequestPublisher<ResultType> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> ResultType in
                 do {
@@ -96,7 +97,7 @@ public extension WebService {
                     return try decoder.decode(ResultType.self, from: data)
                 }
                 catch {
-                    if let decodedError = try? decoder.decode(APIErrorType.self, from: data) {
+                    if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
                         throw RequestError.apiError(error: decodedError, response: response)
                     }
                     if let requestError = error as? RequestError {
@@ -114,10 +115,15 @@ public extension WebService {
             .eraseToAnyPublisher()
     }
     
-    func requestPublisher(for request: URLRequest) -> RequestPublisher<EmptyRequestResult> {
-        requestPublisher(for: request, decoder: EmptyRequestResultDecoder.empty)
+    func requestPublisher<ErrorDecoder: TopLevelDecoder>(for request: URLRequest, errorDecoder: ErrorDecoder) -> RequestPublisher<EmptyRequestResult> where ErrorDecoder.Input == Data {
+        requestPublisher(for: request, decoder: EmptyRequestResultDecoder.empty, errorDecoder: errorDecoder)
     }
-    
+
+    // Use this if you dont need to use error decoding.
+    func requestPublisher(for request: URLRequest) -> RequestPublisher<EmptyRequestResult> {
+        requestPublisher(for: request, decoder: EmptyRequestResultDecoder.empty, errorDecoder: UndefiniedAPIError.decoder)
+    }
+
 }
 
 // Request publishers for Token Based API.
