@@ -24,17 +24,6 @@ public extension WebService {
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, urlParameters: urlParameters, using: requestPublisher)
     }
     
-    func tokenBasedMethodVoidPublisher<BodyParameters: Encodable>(
-        endpoint:      String,
-        bodyContent:   BodyParameters?,
-        urlParameters: DictionaryRepresentable? = nil,
-        method:        URLRequest.HTTPMethod,
-        token:         Token
-    ) -> RequestPublisher<Void> {
-        
-        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, urlParameters: urlParameters, using: requestPublisherVoid)
-    }
-        
 }
 
 private extension WebService {

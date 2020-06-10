@@ -80,12 +80,6 @@ public extension WebService {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> ResultType in
                 do {
-                    return try JSONDecoder().decode(ResultType.self, from: data)
-                }
-                catch {
-                    if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
-                        throw RequestError.apiError(error: decodedError, response: response)
-                    }
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
                     }
@@ -93,32 +87,17 @@ public extension WebService {
                     guard status.isSuccess else {
                         throw RequestError.wrongResponseStatus(status: status)
                     }
+                    return try JSONDecoder().decode(ResultType.self, from: data)
+                }
+                catch {
+                    if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
+                        throw RequestError.apiError(error: decodedError, response: response)
+                    }
+                    if let requestError = error as? RequestError {
+                        throw requestError
+                    }
                     throw RequestError.otherError(error: error)
                 }
-            }
-            .mapError { (error) -> RequestError in
-                guard let requestError = error as? RequestError else {
-                    return .otherError(error: error)
-                }
-                return requestError
-            }
-            .eraseToAnyPublisher()
-    }
-    
-    func requestPublisherVoid(for request: URLRequest) -> RequestPublisher<Void> {
-        URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { (data, response) -> Void in
-                if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
-                    throw RequestError.apiError(error: decodedError, response: response)
-                }
-                guard let response = response as? HTTPURLResponse else {
-                    throw RequestError.failedToReadResponse
-                }
-                let status = response.status
-                guard status.isSuccess else {
-                    throw RequestError.wrongResponseStatus(status: status)
-                }
-                return ()
             }
             .mapError { (error) -> RequestError in
                 guard let requestError = error as? RequestError else {
