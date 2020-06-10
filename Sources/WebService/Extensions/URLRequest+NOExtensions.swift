@@ -32,11 +32,13 @@ public extension URLRequest {
         // TODO: More headers
         case contentType(_ value: ContentType)
         case authorization(_ value: String)
+        case contentLength(_ value: Int)
         
         var key: String {
             switch self {
             case .contentType:   return "Content-Type"
             case .authorization: return "Authorization"
+            case .contentLength: return "Content-Length"
             }
         }
         
@@ -44,6 +46,7 @@ public extension URLRequest {
             switch self {
             case .contentType(let value): return value.string
             case .authorization(let value): return value
+            case .contentLength(let value): return value.description
             }
         }
         

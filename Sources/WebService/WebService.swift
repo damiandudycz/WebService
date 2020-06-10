@@ -34,9 +34,9 @@ private extension WebService {
 // Requests.
 public extension WebService {
         
-    func request<Parameters: Encodable, Encoder: BodyEncoder>(
+    func request(
         for function:  String,
-        bodyContent:   BodyContent<Parameters, Encoder>?,
+        body:          Data?,
         contentType:   URLRequest.ContentType? = nil,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
@@ -66,11 +66,14 @@ public extension WebService {
         // Prepare all headers
         var allHeaders = headers ?? []
         
+        if let contentType = contentType {
+            allHeaders.append(.contentType(contentType))
+        }
         if let token = token {
             allHeaders.append(.authorization("Bearer \(token.accessToken)"))
         }
-        if let contentType = contentType {
-            allHeaders.append(.contentType(contentType))
+        if let body = body {
+            allHeaders.append(.contentLength(body.count))
         }
         
         // Add headers to request
@@ -84,10 +87,9 @@ public extension WebService {
         }
 
         // Add body
-        if let bodyContent = bodyContent {
-            // TODO: Throw error instead of crashing.
-            request.httpBody = try! bodyContent.encoder.buildBody(bodyContent.parameters)
-            print("Data: \(String(data: request.httpBody!, encoding: .utf8)!)")
+        if let body = body {
+            request.httpBody = body
+            print("Data: \(String(data: body, encoding: .utf8)!)")
         }
                 
         return request
@@ -102,7 +104,7 @@ public extension WebService {
         method:        URLRequest.HTTPMethod = .get,
         headers:       [URLRequest.Header]? = nil
     ) -> URLRequest {
-        request(for: function, bodyContent: EmptyBodyContent.null, contentType: contentType, urlParameters: urlParameters, token: token, method: method, headers: headers)
+        request(for: function, body: nil, contentType: contentType, urlParameters: urlParameters, token: token, method: method, headers: headers)
     }
 }
 
