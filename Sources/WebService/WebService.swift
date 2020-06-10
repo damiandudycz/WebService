@@ -10,8 +10,6 @@ import Foundation
 import Combine
 import HandyThings
 
-// TODO: Generics for JSONDecoder() and JSONEncoder()
-
 open class WebService<APIErrorType: Decodable> {
     
     private let baseURL: URL
@@ -76,7 +74,7 @@ public extension WebService {
 // Request publishers.
 public extension WebService {
     
-    func requestPublisher<ResultType: Decodable>(for request: URLRequest) -> RequestPublisher<ResultType> {
+    func requestPublisher<ResultType: Decodable, Decoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder) -> RequestPublisher<ResultType> where Decoder.Input == Data {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> ResultType in
                 do {
@@ -87,10 +85,10 @@ public extension WebService {
                     guard status.isSuccess else {
                         throw RequestError.wrongResponseStatus(status: status)
                     }
-                    return try JSONDecoder().decode(ResultType.self, from: data)
+                    return try decoder.decode(ResultType.self, from: data)
                 }
                 catch {
-                    if let decodedError = try? JSONDecoder().decode(APIErrorType.self, from: data) {
+                    if let decodedError = try? decoder.decode(APIErrorType.self, from: data) {
                         throw RequestError.apiError(error: decodedError, response: response)
                     }
                     if let requestError = error as? RequestError {
