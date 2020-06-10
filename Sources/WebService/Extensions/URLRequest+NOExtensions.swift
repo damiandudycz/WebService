@@ -29,6 +29,7 @@ public extension URLRequest {
 
     enum Header {
         
+        // TODO: More headers
         case contentType(_ value: ContentType)
         case authorization(_ value: String)
         
@@ -50,18 +51,32 @@ public extension URLRequest {
     
     enum ContentType {
         
-        case textHTML
-        case applicationJSON
+        // TODO: More types.
+        case textHTML(encoding: String.Encoding)
+        case applicationJSON(encoding: String.Encoding)
         case multipartFormData(boundary: Boundary)
         
         var string: String {
             switch self {
-            case .textHTML: return "text/html"
-            case .applicationJSON: return "application/json"
-            case .multipartFormData(let boundary): return "multipart/form-data; boundary=\(boundary)"
+            case .textHTML(let encoding): return "text/html;charset=\(encoding.httpName)"
+            case .applicationJSON(let encoding): return "application/json;charset=\(encoding.httpName)"
+            case .multipartFormData(let boundary): return "multipart/form-data;boundary=\(boundary)"
             }
         }
         
+    }
+    
+}
+
+extension String.Encoding {
+    
+    var httpName: String {
+        switch self {
+            // TODO: Fill this list with HTTP supported charsets.
+        case .ascii: return "us-ascii"
+        case .utf8:  return "utf-8"
+        default: fatalError("Unsupported encoding")
+        }
     }
     
 }
