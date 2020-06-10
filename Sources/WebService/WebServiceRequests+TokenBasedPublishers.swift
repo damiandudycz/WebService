@@ -25,35 +25,13 @@ public extension WebService {
         token:         Token
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         
-        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, contentType: contentType, headers: headers, token: token, body: body, decoder: decoder, errorDecoder: errorDecoder, using: requestPublisher)
-    }
-
-}
-
-private extension WebService {
-
-    // MARK: - Private
-    
-    func createTokenBasedMethodPublisher<Result, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
-        endpoint:      String,
-        method:        URLRequest.HTTPMethod,
-        contentType:   URLRequest.ContentType? = nil,
-        headers:       [URLRequest.Header]? = nil,
-        token:         Token,
-        body:          Data?,
-        decoder:       Decoder,
-        errorDecoder:  ErrorDecoder,
-        urlParameters: DictionaryRepresentable? = nil,
-        using creator: RequestPublisherCreator<Result, Decoder, ErrorDecoder>
-    ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
-        
         do {
             let urlParametersDictionary = try { (_ parameters: DictionaryRepresentable?) -> [String : CustomStringConvertible]? in
                 guard let parameters = parameters else { return nil }
                 return try parameters.dictionary()
             }(urlParameters)
             let request = self.request(for: endpoint, body: body, contentType: contentType, urlParameters: urlParametersDictionary, token: token, method: method, headers: headers)
-            return creator(request, decoder, errorDecoder)
+            return requestPublisher(for: request, decoder: decoder, errorDecoder: errorDecoder)
         }
         catch {
             if let error = error as? RequestError {
