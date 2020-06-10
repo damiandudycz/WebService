@@ -23,13 +23,13 @@ public extension WebService {
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: EmptyBodyContent.null, urlParameters: urlParameters, using: requestPublisher)
     }
 
-    func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable, Encoder: RequestBodyEncoder>(
+    func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable, Encoder: TopLevelEncoder>(
         endpoint:      String,
         bodyContent:   (parameters: BodyParameters, encoder: Encoder),
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         token:         Token
-    ) -> RequestPublisher<Result> {
+    ) -> RequestPublisher<Result> where Encoder.Output == Data {
         
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, urlParameters: urlParameters, using: requestPublisher)
     }
@@ -40,14 +40,14 @@ private extension WebService {
 
     // MARK: - Private
     
-    func createTokenBasedMethodPublisher<Result, BodyParameters: Encodable, Encoder: RequestBodyEncoder>(
+    func createTokenBasedMethodPublisher<Result, BodyParameters: Encodable, Encoder: TopLevelEncoder>(
         endpoint:      String,
         method:        URLRequest.HTTPMethod,
         token:         Token,
         bodyContent:   (parameters: BodyParameters, encoder: Encoder)?,
         urlParameters: DictionaryRepresentable? = nil,
         using creator: RequestPublisherCreator<Result>
-    ) -> RequestPublisher<Result> {
+    ) -> RequestPublisher<Result> where Encoder.Output == Data {
         
         do {
             let urlParametersDictionary = try { (_ parameters: DictionaryRepresentable?) -> [String : CustomStringConvertible]? in

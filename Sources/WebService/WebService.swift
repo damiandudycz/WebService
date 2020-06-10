@@ -36,13 +36,13 @@ private extension WebService {
 // Requests.
 public extension WebService {
         
-    func request<Parameters: Encodable, Encoder: RequestBodyEncoder>(
+    func request<Parameters: Encodable, Encoder: TopLevelEncoder>(
         for function:  String,
         bodyContent:   (parameters: Parameters, encoder: Encoder)?,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get
-    ) -> URLRequest {
+    ) -> URLRequest where Encoder.Output == Data {
         
         let url: URL = {
             if let urlParameters = urlParameters {
@@ -154,10 +154,3 @@ public extension WebService {
     }
         
 }
-
-
-public protocol RequestBodyEncoder {
-    func encode<T>(_ value: T) throws -> Data where T : Encodable
-}
-
-extension JSONEncoder: RequestBodyEncoder {}
