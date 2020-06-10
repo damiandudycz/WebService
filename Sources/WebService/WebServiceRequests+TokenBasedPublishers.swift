@@ -13,9 +13,19 @@ public extension WebService {
     
     // MARK: - Public
     
+    func tokenBasedMethodPublisher<Result: Decodable>(
+        endpoint:      String,
+        urlParameters: DictionaryRepresentable? = nil,
+        method:        URLRequest.HTTPMethod,
+        token:         Token
+    ) -> RequestPublisher<Result> {
+        
+        createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: EmptyBodyContent.null, urlParameters: urlParameters, using: requestPublisher)
+    }
+
     func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable>(
         endpoint:      String,
-        bodyContent:   BodyParameters?, // TODO: Try remove the need for this with EmptyBodyContent.null
+        bodyContent:   BodyParameters,
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         token:         Token
