@@ -69,6 +69,14 @@ public extension WebService {
         return request
     }
 
+    func request(
+        for function:  String,
+        urlParameters: [String : CustomStringConvertible]? = nil,
+        token:         Token? = nil,
+        method:        URLRequest.HTTPMethod = .get
+    ) -> URLRequest {
+        request(for: function, bodyContent: EmptyBodyContent.null, urlParameters: urlParameters, token: token, method: method)
+    }
 }
 
 // Request publishers.
@@ -104,6 +112,10 @@ public extension WebService {
                 return requestError
             }
             .eraseToAnyPublisher()
+    }
+    
+    func requestPublisher(for request: URLRequest) -> RequestPublisher<EmptyRequestResult> {
+        requestPublisher(for: request, decoder: EmptyRequestResultDecoder.empty)
     }
     
 }

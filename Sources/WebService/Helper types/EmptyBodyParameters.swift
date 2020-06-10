@@ -8,13 +8,13 @@
 import Foundation
 import Combine
 
-public enum EmptyBodyContent {
+enum EmptyBodyContent {
 
     // Use this instead of simple nil, to resolve Generics when needed.
-    public static let null: (parameters: Data, encoder: EmptyBodyContentEncoder)? = nil
+    static let null: (parameters: Data, encoder: EmptyBodyContentEncoder)? = nil
     
-    public enum EmptyBodyContentEncoder: TopLevelEncoder {
-        public func encode<T>(_ value: T) throws -> Data where T : Encodable { fatalError() }
+    enum EmptyBodyContentEncoder: TopLevelEncoder {
+        func encode<T>(_ value: T) throws -> Data where T : Encodable { fatalError() }
     }
 
 }
