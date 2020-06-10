@@ -34,13 +34,13 @@ private extension WebService {
 // Requests.
 public extension WebService {
         
-    func request<Parameters: Encodable, Encoder: TopLevelEncoder>(
+    func request<Parameters: Encodable, Encoder: BodyEncoder>(
         for function:  String,
         bodyContent:   BodyContent<Parameters, Encoder>?,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get
-    ) -> URLRequest where Encoder.Output == Data {
+    ) -> URLRequest {
         
         let url: URL = {
             if let urlParameters = urlParameters {
@@ -65,7 +65,7 @@ public extension WebService {
         }
         if let bodyContent = bodyContent {
             // TODO: Throw error instead of crashing.
-            request.httpBody = try! bodyContent.encoder.encode(bodyContent.parameters)
+            request.httpBody = try! bodyContent.encoder.buildBody(bodyContent.parameters)
             print("Data: \(String(data: request.httpBody!, encoding: .utf8)!)")
         }
         return request

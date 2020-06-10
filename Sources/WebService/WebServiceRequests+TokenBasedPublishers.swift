@@ -13,7 +13,7 @@ public extension WebService {
     
     // MARK: - Public
     
-    func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable, Encoder: TopLevelEncoder, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
+    func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable, Encoder: BodyEncoder, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
         bodyContent:   BodyContent<BodyParameters, Encoder>,
         urlParameters: DictionaryRepresentable? = nil,
@@ -21,7 +21,7 @@ public extension WebService {
         decoder:       Decoder,
         errorDecoder:  ErrorDecoder,
         token:         Token
-    ) -> RequestPublisher<Result> where Encoder.Output == Data, Decoder.Input == Data, ErrorDecoder.Input == Data {
+    ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, decoder: decoder, errorDecoder: errorDecoder, using: requestPublisher)
     }
     
@@ -39,14 +39,14 @@ public extension WebService {
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: EmptyBodyContent.null, decoder: decoder, errorDecoder: errorDecoder, urlParameters: urlParameters, using: requestPublisher)
     }
 
-    func tokenBasedMethodPublisher<BodyParameters: Encodable, Encoder: TopLevelEncoder, ErrorDecoder: TopLevelDecoder>(
+    func tokenBasedMethodPublisher<BodyParameters: Encodable, Encoder: BodyEncoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
         bodyContent:   BodyContent<BodyParameters, Encoder>,
         urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
         errorDecoder:  ErrorDecoder,
         token:         Token
-    ) -> RequestPublisher<EmptyRequestResult> where Encoder.Output == Data, ErrorDecoder.Input == Data {
+    ) -> RequestPublisher<EmptyRequestResult> where ErrorDecoder.Input == Data {
 
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, token: token, bodyContent: bodyContent, decoder: EmptyRequestResultDecoder.empty, errorDecoder: errorDecoder, urlParameters: urlParameters, using: requestPublisher)
     }
@@ -68,7 +68,7 @@ private extension WebService {
 
     // MARK: - Private
     
-    func createTokenBasedMethodPublisher<Result, BodyParameters: Encodable, Encoder: TopLevelEncoder, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
+    func createTokenBasedMethodPublisher<Result, BodyParameters: Encodable, Encoder: BodyEncoder, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
         method:        URLRequest.HTTPMethod,
         token:         Token,
@@ -77,14 +77,14 @@ private extension WebService {
         errorDecoder:  ErrorDecoder,
         urlParameters: DictionaryRepresentable? = nil,
         using creator: RequestPublisherCreator<Result, Decoder, ErrorDecoder>
-    ) -> RequestPublisher<Result> where Encoder.Output == Data, Decoder.Input == Data, ErrorDecoder.Input == Data {
+    ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         
         do {
             let urlParametersDictionary = try { (_ parameters: DictionaryRepresentable?) -> [String : CustomStringConvertible]? in
                 guard let parameters = parameters else { return nil }
                 return try parameters.dictionary()
             }(urlParameters)
-            let request = try self.request(for: endpoint, bodyContent: bodyContent, urlParameters: urlParametersDictionary, token: token, method: method)
+            let request = self.request(for: endpoint, bodyContent: bodyContent, urlParameters: urlParametersDictionary, token: token, method: method)
             return creator(request, decoder, errorDecoder)
         }
         catch {
