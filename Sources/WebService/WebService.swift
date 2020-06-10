@@ -37,10 +37,10 @@ public extension WebService {
     func request<Parameters: Encodable, Encoder: BodyEncoder>(
         for function:  String,
         bodyContent:   BodyContent<Parameters, Encoder>?,
+        contentType:   URLRequest.ContentType? = nil,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get,
-        contentType:   URLRequest.ContentType? = nil,
         headers:       [URLRequest.Header]? = nil
     ) -> URLRequest {
         
@@ -57,6 +57,7 @@ public extension WebService {
             }
         }()
         
+        print("------------------------------")
         print("Created request: \(url)")
         
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
@@ -77,31 +78,31 @@ public extension WebService {
             request.setValue(header.value, forHTTPHeaderField: header.key)
         }
         
+        // Print headers
+        if let headers = request.allHTTPHeaderFields {
+            print("Headers: \(headers)")
+        }
+
         // Add body
         if let bodyContent = bodyContent {
             // TODO: Throw error instead of crashing.
             request.httpBody = try! bodyContent.encoder.buildBody(bodyContent.parameters)
             print("Data: \(String(data: request.httpBody!, encoding: .utf8)!)")
         }
-        
-        // Print headers
-        if let headers = request.allHTTPHeaderFields {
-            print("Headers: \(headers)")
-        }
-        
+                
         return request
     }
 
     // With no content.
     func request(
         for function:  String,
+        contentType:   URLRequest.ContentType? = nil,
         urlParameters: [String : CustomStringConvertible]? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get,
-        contentType:   URLRequest.ContentType? = nil,
         headers:       [URLRequest.Header]? = nil
     ) -> URLRequest {
-        request(for: function, bodyContent: EmptyBodyContent.null, urlParameters: urlParameters, token: token, method: method, contentType: contentType, headers: headers)
+        request(for: function, bodyContent: EmptyBodyContent.null, contentType: contentType, urlParameters: urlParameters, token: token, method: method, headers: headers)
     }
 }
 

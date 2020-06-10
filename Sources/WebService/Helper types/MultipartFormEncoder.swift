@@ -9,9 +9,11 @@ import Foundation
 
 public struct MultipartFormEncoder: BodyEncoder {
     
-    private let boundary: UUID
+    public typealias Boundary = URLRequest.Boundary
     
-    public init(boundary: UUID) {
+    private let boundary: Boundary
+    
+    public init(boundary: Boundary) {
         self.boundary = boundary
     }
     

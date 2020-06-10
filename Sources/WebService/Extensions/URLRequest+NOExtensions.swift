@@ -24,6 +24,8 @@ extension URLRequest {
 }
 
 public extension URLRequest {
+    
+    typealias Boundary = UUID
 
     enum Header {
         
@@ -50,7 +52,7 @@ public extension URLRequest {
         
         case textHTML
         case applicationJSON
-        case multipartFormData(boundary: UUID)
+        case multipartFormData(boundary: Boundary)
         
         var string: String {
             switch self {
