@@ -15,15 +15,16 @@ public extension WebService {
     
     func tokenBasedMethodPublisher<Result: Decodable, BodyParameters: Encodable, Encoder: BodyEncoder, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
+        method:        URLRequest.HTTPMethod,
         bodyContent:   BodyContent<BodyParameters, Encoder>,
         urlParameters: DictionaryRepresentable? = nil,
-        method:        URLRequest.HTTPMethod,
         contentType:   URLRequest.ContentType? = nil,
         headers:       [URLRequest.Header]? = nil,
         decoder:       Decoder,
         errorDecoder:  ErrorDecoder,
         token:         Token
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
+        
         createTokenBasedMethodPublisher(endpoint: endpoint, method: method, contentType: contentType, headers: headers, token: token, bodyContent: bodyContent, decoder: decoder, errorDecoder: errorDecoder, using: requestPublisher)
     }
     
@@ -31,8 +32,8 @@ public extension WebService {
     
     func tokenBasedMethodPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
-        urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
+        urlParameters: DictionaryRepresentable? = nil,
         contentType:   URLRequest.ContentType? = nil,
         headers:       [URLRequest.Header]? = nil,
         decoder:       Decoder,
@@ -45,9 +46,9 @@ public extension WebService {
 
     func tokenBasedMethodPublisher<BodyParameters: Encodable, Encoder: BodyEncoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
+        method:        URLRequest.HTTPMethod,
         bodyContent:   BodyContent<BodyParameters, Encoder>,
         urlParameters: DictionaryRepresentable? = nil,
-        method:        URLRequest.HTTPMethod,
         contentType:   URLRequest.ContentType? = nil,
         headers:       [URLRequest.Header]? = nil,
         errorDecoder:  ErrorDecoder,
@@ -59,8 +60,8 @@ public extension WebService {
 
     func tokenBasedMethodPublisher<ErrorDecoder: TopLevelDecoder>(
         endpoint:      String,
-        urlParameters: DictionaryRepresentable? = nil,
         method:        URLRequest.HTTPMethod,
+        urlParameters: DictionaryRepresentable? = nil,
         contentType:   URLRequest.ContentType? = nil,
         headers:       [URLRequest.Header]? = nil,
         errorDecoder:  ErrorDecoder,
