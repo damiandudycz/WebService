@@ -9,7 +9,8 @@ import Foundation
 import UIKit
 import HandyThings
 
-public struct MultipartFormEncoder: BodyEncoder {
+/// A Body encoder, that converts some supported types into Multi Part Form.
+public struct MultipartFormBodyEncoder: BodyEncoder {
     
     public enum EncodingError: Error {
         case unsupportedParametersType
@@ -49,7 +50,7 @@ public struct MultipartFormEncoder: BodyEncoder {
     
 }
 
-private extension MultipartFormEncoder {
+private extension MultipartFormBodyEncoder {
     
     // Form fragments adding
     func insert(_ data: Data, name: String, filename: String?, type: URLRequest.ContentType, to body: inout Data) {

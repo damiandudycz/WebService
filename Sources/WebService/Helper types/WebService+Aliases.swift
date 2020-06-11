@@ -13,6 +13,6 @@ public extension WebService {
     typealias RequestPublisher<Result> = AnyPublisher<Result, RequestError>
     typealias TokenPublisher = RequestPublisher<Token>
     typealias TokenRefreshCreator = (_ token: Token) -> TokenPublisher
-    typealias FreshTokenBasedMethodCreator<Result, Parameters> = (_ parameters: Parameters, _ freshToken: Token) throws -> RequestPublisher<Result>
+    typealias RequestPublisherWithTokenCreator<Result, Parameters> = (_ parameters: Parameters, _ token: Token) throws -> RequestPublisher<Result>
     
 }

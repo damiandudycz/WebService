@@ -2,17 +2,14 @@
 //  File.swift
 //  
 //
-//  Created by Home Dudycz on 10/06/2020.
+//  Created by Home Dudycz on 11/06/2020.
 //
 
 import Foundation
 import Combine
 
-public protocol BodyEncoder {
-    
-    func buildBody<Parameters: Encodable>(_ parameters: Parameters) throws -> Data
-    
-}
+extension JSONEncoder: BodyEncoder {}
+extension PropertyListEncoder: BodyEncoder {}
 
 public extension BodyEncoder where Self: TopLevelEncoder, Output == Data {
 
@@ -21,6 +18,3 @@ public extension BodyEncoder where Self: TopLevelEncoder, Output == Data {
     }
     
 }
-
-extension JSONEncoder: BodyEncoder {}
-extension PropertyListEncoder: BodyEncoder {}

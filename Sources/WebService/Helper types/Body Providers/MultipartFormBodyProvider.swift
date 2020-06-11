@@ -7,18 +7,18 @@
 
 import Foundation
 
-public struct MultipartForm<Parameters>: BodyContentMaker {
+public struct MultipartFormBodyProvider<Parameters>: BodyProvider {
     
-    public func prepareBody() throws -> Data? {
+    public func provideBody() throws -> Data? {
         try encoder.buildBody(parameters)
     }
     
     public init(_ parameters: Parameters, boundary: URLRequest.Boundary) {
         self.parameters = parameters
-        self.encoder = MultipartFormEncoder(boundary: boundary)
+        self.encoder = MultipartFormBodyEncoder(boundary: boundary)
     }
     
     public let parameters: Parameters
-    public let encoder: MultipartFormEncoder
+    public let encoder: MultipartFormBodyEncoder
     
 }

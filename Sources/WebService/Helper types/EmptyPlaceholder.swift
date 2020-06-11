@@ -9,20 +9,13 @@ import Foundation
 import HandyThings
 import Combine
 
-public typealias NoResult        = EmptyPlaceholder // Used instead of Void when no result type.
-public typealias NoResultDecoder = EmptyPlaceholder // Encoder for NoResult
-public typealias NoBodyEncoder   = EmptyPlaceholder // Body data encoder
-public typealias NoParameters    = EmptyPlaceholder // Query or Body parameters
-
 public enum EmptyPlaceholder {
     case empty
 }
 
-extension EmptyPlaceholder: BodyEncoder {
-    public func buildBody<Parameters>(_ parameters: Parameters) throws -> Data {
-        fatalError()
-    }
-}
+public typealias NoResult        = EmptyPlaceholder // Used instead of Void when no result type.
+public typealias NoResultDecoder = EmptyPlaceholder // Encoder for NoResult
+public typealias NoParameters    = EmptyPlaceholder // Query or Body parameters
 
 extension EmptyPlaceholder: DictionaryRepresentable {
     public func encode(to encoder: Encoder) throws {}

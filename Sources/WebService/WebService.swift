@@ -134,14 +134,10 @@ public extension WebService {
             .eraseToAnyPublisher()
     }
     
-}
-
-// Request publishers for Token Based API.
-public extension WebService {
-    
+    // Request publishers for Token Based API.
     /// This function will automatically obtain and store new access token if current token is expired.
-    func publisherWithFreshToken<Result: Decodable, Parameters>(
-        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<Result, Parameters>,
+    func requestPublisherWithFreshToken<Result: Decodable, Parameters>(
+        _ methodCreator:     @escaping RequestPublisherWithTokenCreator<Result, Parameters>,
         parameters:          Parameters,
         token:               Token?,
         tokenRefreshCreator: @escaping TokenRefreshCreator
@@ -149,7 +145,7 @@ public extension WebService {
         guard let token = token else {
             return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
         }
-        
+
         // Token verification checks if token needs to be updated. If it does it will create a tokenUpdatePublisher. Otherwise it will creare Just(token).
         let tokenVerification: RequestPublisher<Token> = {
             guard token.accessToken.isExpired else {
@@ -175,7 +171,7 @@ public extension WebService {
             }
             return tokenUpdatePublisher.eraseToAnyPublisher()
         }()
-        
+
         return tokenVerification
             .tryMap { (_) in try methodCreator(parameters, token) }
             .mapError({ (error) -> RequestError in

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ParametersEncoder<Parameters: Encodable, Encoder: BodyEncoder>: BodyContentMaker {
+public struct EncoderBasedBodyProvider<Parameters: Encodable, Encoder: BodyEncoder>: BodyProvider {
     
     public let parameters: Parameters
     public let encoder:    Encoder
@@ -17,7 +17,7 @@ public struct ParametersEncoder<Parameters: Encodable, Encoder: BodyEncoder>: Bo
         self.encoder = encoder
     }
     
-    public func prepareBody() throws -> Data? {
+    public func provideBody() throws -> Data? {
         try encoder.buildBody(parameters)
     }
 

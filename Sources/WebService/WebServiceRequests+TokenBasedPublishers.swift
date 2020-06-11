@@ -10,9 +10,7 @@ import Combine
 import HandyThings
 
 public extension WebService {
-    
-    // MARK: - Public
-    
+        
     func tokenBasedMethodPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         endpoint:        String,
         method:          URLRequest.HTTPMethod,
@@ -27,4 +25,5 @@ public extension WebService {
         let request = self.request(for: endpoint, body: body, contentType: contentType, queryParameters: queryParameters, token: token, method: method, headers: headers)
         return requestPublisher(for: request, decoder: decoder, errorDecoder: errorDecoder)
     }
+    
 }

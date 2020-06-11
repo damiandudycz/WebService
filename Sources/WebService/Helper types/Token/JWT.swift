@@ -12,7 +12,7 @@ extension Token {
     struct JWT: Codable, CustomStringConvertible {
         
         private let rawValue: String
-        private let accessSegment: AccessSegment
+        private let accessSegment: AccessSegment // Encoded from raw value.
         
         var description: String {
             rawValue
