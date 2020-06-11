@@ -36,7 +36,7 @@ public struct MultipartFormBodyEncoder: BodyEncoder {
             guard let data = image.jpegData(compressionQuality: 1.0) else {
                 throw EncodingError.conversionFailed
             }
-            return buildFormBody(data, name: "image", filename: "\(UUID()).jpg", type: .image(.jpeg))
+            return buildFormBody(data, name: "file", filename: "\(UUID()).jpg", type: .image(.jpeg))
         case let dictionaryRepresentable as DictionaryRepresentable:
             let dictionary = try dictionaryRepresentable.dictionary()
             return buildFormBody(dictionary)
@@ -63,13 +63,16 @@ private extension MultipartFormBodyEncoder {
         }
         part.append("\r\n".data(using: .utf8)!)
         part.append("Content-Type: \(type.string)\r\n\r\n".data(using: .utf8)!)
+        
+        print(String(data: part, encoding: .utf8)!)
+
         part.append(data)
         body.append(part)
     }
     
     // Finishing form
     func finishForm(_ body: inout Data) {
-        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        body.append("\n--\(boundary)--\n".data(using: .utf8)!)
     }
 
     // MARK: - Adding various data types
