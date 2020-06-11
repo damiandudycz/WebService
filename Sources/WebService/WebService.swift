@@ -91,7 +91,6 @@ public extension WebService {
         // Add body
         if let body = body {
             request.httpBody = body
-            print("Data: \(String(data: body, encoding: .utf8)!)")
         }
                 
         return request

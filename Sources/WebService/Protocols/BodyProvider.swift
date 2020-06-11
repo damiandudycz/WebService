@@ -11,5 +11,7 @@ import Foundation
 /// It will be asked to provide body when needed.
 /// Providers should use some BodyEncoders to provide data from stored properties.
 public protocol BodyProvider {
-    func provideBody() throws -> Data?
+    
+    func provideBody() throws -> Data
+
 }

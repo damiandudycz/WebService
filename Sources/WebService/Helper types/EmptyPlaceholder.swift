@@ -10,7 +10,9 @@ import HandyThings
 import Combine
 
 public enum EmptyPlaceholder {
+    
     case empty
+
 }
 
 public typealias NoResult        = EmptyPlaceholder // Used instead of Void when no result type.
@@ -28,7 +30,6 @@ extension EmptyPlaceholder: Decodable {
 }
 
 extension EmptyPlaceholder: TopLevelDecoder {
-    public typealias Input = Data
     public func decode<T>(_ type: T.Type, from: Data) throws -> T where T : Decodable {
         EmptyPlaceholder.empty as! T // TODO: Could it be constrained somehow better?
     }

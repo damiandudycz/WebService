@@ -9,7 +9,7 @@ import Foundation
 
 public struct MultipartFormBodyProvider<Parameters>: BodyProvider {
     
-    public func provideBody() throws -> Data? {
+    public func provideBody() throws -> Data {
         try encoder.encodeBody(parameters)
     }
     
