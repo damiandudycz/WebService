@@ -36,8 +36,8 @@ public struct MultipartFormEncoder: BodyEncoder {
                 throw EncodingError.conversionFailed
             }
             return buildFormBody(data, name: "image", filename: "\(UUID()).jpg", type: .image(.jpeg))
-        case let json as DictionaryRepresentable:
-            let dictionary = try json.dictionary()
+        case let dictionaryRepresentable as DictionaryRepresentable:
+            let dictionary = try dictionaryRepresentable.dictionary()
             return buildFormBody(dictionary)
         default:
             throw EncodingError.unsupportedParametersType
