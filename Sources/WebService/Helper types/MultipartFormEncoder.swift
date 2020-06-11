@@ -39,11 +39,17 @@ public struct MultipartFormEncoder: BodyEncoder {
         case let dictionaryRepresentable as DictionaryRepresentable:
             let dictionary = try dictionaryRepresentable.dictionary()
             return buildFormBody(dictionary)
+        case let formParameters as RawBodyFormParameters:
+            return buildFormBody(formParameters)
         default:
             throw EncodingError.unsupportedParametersType
         }
         
     }
+    
+//    public func buildBody(_ parameters: RawBodyFormParameters) throws -> Data {
+//        buildFormBody(parameters)
+//    }
     
 }
 
@@ -78,7 +84,7 @@ private extension MultipartFormEncoder {
         return form
     }
 
-    func buildFormBody(_ dictionary: [String : CustomStringConvertible]) -> Data {
+    func buildFormBody(_ dictionary: RawBodyFormParameters) -> Data {
         var form = Data()
         dictionary.forEach { (key, value) in
             let data = value.description.data(using: .utf8)!
