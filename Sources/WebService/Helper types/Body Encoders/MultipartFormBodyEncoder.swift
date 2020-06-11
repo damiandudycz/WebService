@@ -31,12 +31,14 @@ public struct MultipartFormBodyEncoder: BodyEncoder {
         switch parameters {
         case let data as Data:
             // TODO: Prehaps we should pass type in Encoder initializer instead.
-            return buildFormBody(data, name: "file", filename: UUID().uuidString, type: .applicationOctetStream)
+            return buildFormBody(data, name: "file", filename: UUID(), type: .application())
         case let image as UIImage:
             guard let data = image.jpegData(compressionQuality: 1.0) else {
                 throw EncodingError.conversionFailed
             }
+            // TODO: Select image type as a property in MultipartFormBodyEncoder
             return buildFormBody(data, name: "file", filename: "\(UUID()).jpg", type: .image(.jpeg))
+        // TODO: Verify these below
         case let dictionaryRepresentable as DictionaryRepresentable:
             let dictionary = try dictionaryRepresentable.dictionary()
             return buildFormBody(dictionary)
@@ -63,23 +65,20 @@ private extension MultipartFormBodyEncoder {
         }
         part.append("\r\n".data(using: .utf8)!)
         part.append("Content-Type: \(type.string)\r\n\r\n".data(using: .utf8)!)
-        
-        print(String(data: part, encoding: .utf8)!)
-
         part.append(data)
         body.append(part)
     }
     
     // Finishing form
     func finishForm(_ body: inout Data) {
-        body.append("\n--\(boundary)--\n".data(using: .utf8)!)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
     }
 
     // MARK: - Adding various data types
     
-    func buildFormBody(_ data: Data, name: String, filename: String?, type: URLRequest.ContentType) -> Data {
+    func buildFormBody(_ data: Data, name: String, filename: CustomStringConvertible?, type: URLRequest.ContentType) -> Data {
         var form = Data()
-        insert(data, name: name, filename: filename, type: type, to: &form)
+        insert(data, name: name, filename: filename?.description, type: type, to: &form)
         finishForm(&form)
         return form
     }
@@ -88,7 +87,7 @@ private extension MultipartFormBodyEncoder {
         var form = Data()
         dictionary.forEach { (key, value) in
             let data = value.description.data(using: .utf8)!
-            insert(data, name: key, filename: nil, type: .textPlain, to: &form)
+            insert(data, name: key, filename: nil, type: .text(), to: &form)
         }
         finishForm(&form)
         return form

@@ -13,21 +13,17 @@ public extension URLRequest {
         
         // TODO: More types.
         // TODO: Split application like image into container
-        case textHTML         (encoding: String.Encoding = .utf8)
-        case textPlain
-        case applicationJSON  (encoding: String.Encoding = .utf8)
-        case applicationOctetStream
+        case text             (_ type: TextType = .plain, encoding: String.Encoding = .utf8)
+        case application      (_ type: ApplicationType = .octetStream, encoding: String.Encoding = .utf8)
         case multipartFormData(boundary: Boundary)
-        case image(_ type: ImageType)
+        case image            (_ type: ImageType)
         
         var string: String {
             switch self {
-            case .textHTML         (let encoding): return "text/html;charset=\(encoding.httpName)"
-            case .textPlain:                       return "text/plain"
-            case .applicationJSON  (let encoding): return "application/json;charset=\(encoding.httpName)"
-            case .applicationOctetStream:          return "application/octet-stream"
-            case .multipartFormData(let boundary): return "multipart/form-data;boundary=\(boundary)"
-            case .image            (let type):     return "image/\(type.rawValue)"
+            case let .text             (type, encoding): return "text/\(type.rawValue);charset=\(encoding.httpName)"
+            case let .application      (type, encoding): return "application/\(type.rawValue);charset=\(encoding.httpName)"
+            case let .multipartFormData(boundary):       return "multipart/form-data;boundary=\(boundary)"
+            case let .image            (type):           return "image/\(type.rawValue)"
             }
         }
         

@@ -9,8 +9,8 @@ import Foundation
 
 public extension URLRequest {
     
-    enum ImageType: String {
-        case jpeg, png, bmp, fiff, svg = "svg+xml"
+    enum ApplicationType: String {
+        case json, octetStream = "octet-stream", pdf, zip, xml
     }
     
 }
