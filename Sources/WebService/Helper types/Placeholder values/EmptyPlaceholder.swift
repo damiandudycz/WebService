@@ -9,10 +9,10 @@ import Foundation
 import HandyThings
 import Combine
 
-public typealias NoResult        = EmptyPlaceholder
-public typealias NoResultDecoder = EmptyPlaceholder
-public typealias NoBodyEncoder   = EmptyPlaceholder
-public typealias NoParameters    = EmptyPlaceholder
+public typealias NoResult        = EmptyPlaceholder // Used instead of Void when no result type.
+public typealias NoResultDecoder = EmptyPlaceholder // Encoder for NoResult
+public typealias NoBodyEncoder   = EmptyPlaceholder // Body data encoder
+public typealias NoParameters    = EmptyPlaceholder // Query or Body parameters
 
 public enum EmptyPlaceholder {
     case empty

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public typealias BodyContent<Parameters, Encoder: BodyEncoder> = (
+public typealias BodyContent<Parameters: Encodable, Encoder: BodyEncoder> = (
     parameters: Parameters,
-    encoder: Encoder
+    encoder:    Encoder
 )
