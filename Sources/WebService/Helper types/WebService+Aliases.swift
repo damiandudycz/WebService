@@ -10,9 +10,9 @@ import Combine
 
 public extension WebService {
     
-    typealias RequestPublisher<Type> = AnyPublisher<Type, RequestError>
+    typealias RequestPublisher<Result> = AnyPublisher<Result, RequestError>
     typealias TokenPublisher = RequestPublisher<Token>
     typealias TokenRefreshCreator = (_ token: Token) -> TokenPublisher
-    typealias FreshTokenBasedMethodCreator<PublisherType, ParametersType> = (_ parameters: ParametersType, _ freshToken: Token) -> RequestPublisher<PublisherType>
+    typealias FreshTokenBasedMethodCreator<Result, Parameters> = (_ parameters: Parameters, _ freshToken: Token) -> RequestPublisher<Result>
     
 }

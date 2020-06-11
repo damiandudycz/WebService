@@ -100,9 +100,9 @@ public extension WebService {
 // Request publishers.
 public extension WebService {
     
-    func requestPublisher<ResultType: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder, errorDecoder: ErrorDecoder) -> RequestPublisher<ResultType> where Decoder.Input == Data, ErrorDecoder.Input == Data {
+    func requestPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder, errorDecoder: ErrorDecoder) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { (data, response) -> ResultType in
+            .tryMap { (data, response) -> Result in
                 do {
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
@@ -111,7 +111,7 @@ public extension WebService {
                     guard status.isSuccess else {
                         throw RequestError.wrongResponseStatus(status: status)
                     }
-                    return try decoder.decode(ResultType.self, from: data)
+                    return try decoder.decode(Result.self, from: data)
                 }
                 catch {
                     if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
@@ -138,12 +138,12 @@ public extension WebService {
 public extension WebService {
     
     /// This function will automatically obtain and store new access token if current token is expired.
-    func publisherWithFreshToken<PublisherType, ParametersType>(
-        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<PublisherType, ParametersType>,
-        parameters:          ParametersType,
+    func publisherWithFreshToken<Result: Decodable, Parameters>(
+        _ methodCreator:     @escaping FreshTokenBasedMethodCreator<Result, Parameters>,
+        parameters:          Parameters,
         token:               Token?,
         tokenRefreshCreator: @escaping TokenRefreshCreator
-    ) -> RequestPublisher<PublisherType> {
+    ) -> RequestPublisher<Result> {
         guard let token = token else {
             return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
         }
