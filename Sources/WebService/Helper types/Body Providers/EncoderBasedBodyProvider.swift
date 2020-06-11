@@ -18,7 +18,7 @@ public struct EncoderBasedBodyProvider<Parameters: Encodable, Encoder: BodyEncod
     }
     
     public func provideBody() throws -> Data? {
-        try encoder.buildBody(parameters)
+        try encoder.encodeBody(parameters)
     }
 
 }

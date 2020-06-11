@@ -25,7 +25,7 @@ public struct MultipartFormBodyEncoder: BodyEncoder {
         self.boundary = boundary
     }
     
-    public func buildBody<Parameters>(_ parameters: Parameters) throws -> Data {
+    public func encodeBody<Parameters>(_ parameters: Parameters) throws -> Data {
 
         // TODO: Other parameters types.
         switch parameters {

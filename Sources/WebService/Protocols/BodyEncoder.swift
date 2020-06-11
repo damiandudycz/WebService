@@ -10,6 +10,6 @@ import Foundation
 /// A type that can convert some parameters to Body Data.
 public protocol BodyEncoder {
     
-    func buildBody<Parameters: Encodable>(_ parameters: Parameters) throws -> Data
+    func encodeBody<Parameters: Encodable>(_ parameters: Parameters) throws -> Data
     
 }

@@ -10,7 +10,7 @@ import Foundation
 public struct MultipartFormBodyProvider<Parameters>: BodyProvider {
     
     public func provideBody() throws -> Data? {
-        try encoder.buildBody(parameters)
+        try encoder.encodeBody(parameters)
     }
     
     public init(_ parameters: Parameters, boundary: URLRequest.Boundary) {

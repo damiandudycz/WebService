@@ -13,7 +13,7 @@ extension PropertyListEncoder: BodyEncoder {}
 
 public extension BodyEncoder where Self: TopLevelEncoder, Output == Data {
 
-    func buildBody<Parameters: Encodable>(_ parameters: Parameters) throws -> Data {
+    func encodeBody<Parameters: Encodable>(_ parameters: Parameters) throws -> Data {
         try encode(parameters)
     }
     
