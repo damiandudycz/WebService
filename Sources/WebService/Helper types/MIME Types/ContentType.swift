@@ -12,8 +12,8 @@ public extension URLRequest {
     enum ContentType {
         
         case multipartFormData(boundary: Boundary)
-        case text             (_ type: TextType = .plain, encoding: String.Encoding = .utf8)
         case application      (_ type: ApplicationType = .octetStream, encoding: String.Encoding = .utf8)
+        case text             (_ type: TextType = .plain, encoding: String.Encoding = .utf8)
         case image            (_ type: ImageType)
         case audio            (_ type: AudioType)
         case video            (_ type: VideoType)
