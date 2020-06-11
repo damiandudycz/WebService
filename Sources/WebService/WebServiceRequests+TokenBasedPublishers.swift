@@ -24,22 +24,7 @@ public extension WebService {
         errorDecoder:  ErrorDecoder,
         token:         Token
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
-        
-        do {
-            let urlParametersDictionary = try { (_ parameters: DictionaryRepresentable?) -> [String : CustomStringConvertible]? in
-                guard let parameters = parameters else { return nil }
-                return try parameters.dictionary()
-            }(urlParameters)
-            let request = self.request(for: endpoint, body: body, contentType: contentType, urlParameters: urlParametersDictionary, token: token, method: method, headers: headers)
-            return requestPublisher(for: request, decoder: decoder, errorDecoder: errorDecoder)
-        }
-        catch {
-            if let error = error as? RequestError {
-                return Fail(error: error).eraseToAnyPublisher()
-            }
-            return Fail(error: .otherError(error: error)).eraseToAnyPublisher()
-        }
-
+        let request = self.request(for: endpoint, body: body, contentType: contentType, urlParameters: urlParameters, token: token, method: method, headers: headers)
+        return requestPublisher(for: request, decoder: decoder, errorDecoder: errorDecoder)
     }
-
 }

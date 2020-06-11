@@ -38,7 +38,7 @@ public extension WebService {
         for function:  String,
         body:          Data? = nil,
         contentType:   URLRequest.ContentType? = nil,
-        urlParameters: [String : CustomStringConvertible]? = nil,
+        urlParameters: DictionaryRepresentable? = nil,
         token:         Token? = nil,
         method:        URLRequest.HTTPMethod = .get,
         headers:       [URLRequest.Header]? = nil
@@ -46,7 +46,9 @@ public extension WebService {
         
         let url: URL = {
             if let urlParameters = urlParameters {
-                let parametersStrings = urlParameters.map { (key, value) -> String in
+                // TODO: Try! handle
+                let urlParametersDictionary = try! urlParameters.dictionary()
+                let parametersStrings = urlParametersDictionary.map { (key, value) -> String in
                     "\(key)=\(value.description.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)"
                 }
                 let string = "?\(parametersStrings.joined(separator: "&"))"
