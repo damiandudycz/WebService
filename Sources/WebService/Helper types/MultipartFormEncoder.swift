@@ -6,8 +6,15 @@
 //
 
 import Foundation
+import UIKit
+import HandyThings
 
 public struct MultipartFormEncoder: BodyEncoder {
+    
+    public enum EncodingError: Error {
+        case unsupportedParametersType
+        case conversionFailed
+    }
     
     public typealias Boundary = URLRequest.Boundary
     
@@ -18,15 +25,63 @@ public struct MultipartFormEncoder: BodyEncoder {
     }
     
     public func buildBody<Parameters>(_ parameters: Parameters) throws -> Data where Parameters : Encodable {
-        var data = Data()
-        if let parameters = parameters as? Data {
-            data.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
-            data.append("Content-Disposition: form-data; name=\"file\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
-            data.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
-            data.append(parameters)
-            data.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        // TODO: Other parameters types.
+        switch parameters {
+        case let data as Data:
+            // TODO: Prehaps we should pass type in Encoder initializer instead.
+            return buildBody(data, name: "file", filename: UUID().uuidString, type: .applicationOctetStream)
+        case let image as UIImage:
+            guard let data = image.jpegData(compressionQuality: 1.0) else {
+                throw EncodingError.conversionFailed
+            }
+            return buildBody(data, name: "image", filename: "\(UUID()).jpg", type: .image(.jpeg))
+        case let json as DictionaryRepresentable:
+            let dictionary = try json.dictionary()
+            return buildBody(dictionary)
+        default:
+            throw EncodingError.unsupportedParametersType
         }
-        return data
+        
     }
     
+}
+
+private extension MultipartFormEncoder {
+    
+    // Form fragments adding
+    func insert(_ data: Data, name: String, filename: String, type: URLRequest.ContentType, to body: inout Data) {
+        var part = Data()
+        part.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        part.append("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        part.append("Content-Type: \(type.string)\r\n\r\n".data(using: .utf8)!)
+        part.append(data)
+        body.append(part)
+    }
+    
+    // Finishing form
+    func finishForm(_ body: inout Data) {
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+    }
+
+    // MARK: - Adding various data types
+    
+    func buildBody(_ data: Data, name: String, filename: String, type: URLRequest.ContentType) -> Data {
+        var form = Data()
+        insert(data, name: name, filename: filename, type: type, to: &form)
+        finishForm(&form)
+        return form
+    }
+
+    func buildBody(_ dictionary: [String : CustomStringConvertible]) -> Data {
+        var form = Data()
+        dictionary.forEach { (key, value) in
+            let data = value.description.data(using: .utf8)!
+            // TODO: Remove filename and type if needed.
+            insert(data, name: key, filename: key, type: .textPlain, to: &form)
+        }
+        finishForm(&form)
+        return form
+    }
+
 }
