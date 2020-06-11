@@ -103,7 +103,11 @@ public extension WebService {
     
     // TODO: Check if these two can be combined into one.
     
-    func requestPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder, errorDecoder: ErrorDecoder) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
+    func requestPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
+        for request:  URLRequest,
+        decoder:      Decoder,
+        errorDecoder: ErrorDecoder
+    ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
                 do {
@@ -140,13 +144,9 @@ public extension WebService {
     func requestPublisherWithFreshToken<Result: Decodable, Parameters>(
         _ methodCreator:     @escaping RequestPublisherWithTokenCreator<Result, Parameters>,
         parameters:          Parameters,
-        token:               Token?,
+        token:               Token,
         tokenRefreshCreator: @escaping TokenRefreshCreator
     ) -> RequestPublisher<Result> {
-        guard let token = token else {
-            return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
-        }
-
         // Token verification checks if token needs to be updated. If it does it will create a tokenUpdatePublisher. Otherwise it will creare Just(token).
         let tokenVerification: RequestPublisher<Token> = {
             guard token.accessToken.isExpired else {
