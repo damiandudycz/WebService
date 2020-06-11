@@ -176,7 +176,16 @@ public extension WebService {
             return tokenUpdatePublisher.eraseToAnyPublisher()
         }()
         
-        return tokenVerification.flatMap { (_) in methodCreator(parameters, token) }.eraseToAnyPublisher()
+        return tokenVerification
+            .tryMap { (_) in try methodCreator(parameters, token) }
+            .mapError({ (error) -> RequestError in
+                if let error = error as? RequestError {
+                    return error
+                }
+                return .otherError(error: error)
+            })
+            .flatMap { $0 }
+            .eraseToAnyPublisher()
     }
-        
+    
 }
