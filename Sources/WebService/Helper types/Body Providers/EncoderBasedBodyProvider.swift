@@ -12,9 +12,9 @@ public struct EncoderBasedBodyProvider<Parameters: Encodable, Encoder: BodyEncod
     public let parameters: Parameters
     public let encoder:    Encoder
     
-    public init(_ parameters: Parameters, _ encoder: Encoder) {
-        self.parameters = parameters
+    public init(encoder: Encoder, parameters: Parameters) {
         self.encoder = encoder
+        self.parameters = parameters
     }
     
     public func provideBody() throws -> Data {

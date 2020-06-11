@@ -13,9 +13,9 @@ public struct MultipartFormBodyProvider<Parameters>: BodyProvider {
         try encoder.encodeBody(parameters)
     }
     
-    public init(_ parameters: Parameters, boundary: URLRequest.Boundary) {
-        self.parameters = parameters
+    public init(boundary: URLRequest.Boundary, parameters: Parameters) {
         self.encoder = MultipartFormBodyEncoder(boundary: boundary)
+        self.parameters = parameters
     }
     
     public let parameters: Parameters
