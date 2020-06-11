@@ -16,7 +16,7 @@ public protocol BodyEncoder {
 
 public extension BodyEncoder where Self: TopLevelEncoder, Output == Data {
 
-    func buildBody<Parameters>(_ parameters: Parameters) throws -> Data where Parameters : Encodable {
+    func buildBody<Parameters: Encodable>(_ parameters: Parameters) throws -> Data {
         try encode(parameters)
     }
     

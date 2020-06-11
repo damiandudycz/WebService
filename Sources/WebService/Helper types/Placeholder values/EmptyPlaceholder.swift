@@ -19,7 +19,7 @@ public enum EmptyPlaceholder {
 }
 
 extension EmptyPlaceholder: BodyEncoder {
-    public func buildBody<Parameters>(_ parameters: Parameters) throws -> Data where Parameters : Encodable {
+    public func buildBody<Parameters>(_ parameters: Parameters) throws -> Data {
         fatalError()
     }
 }
