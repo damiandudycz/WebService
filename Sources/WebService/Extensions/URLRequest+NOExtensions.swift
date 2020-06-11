@@ -30,7 +30,7 @@ public extension URLRequest {
     enum Header {
         
         // TODO: More headers
-        case contentType(_ value: ContentType)
+        case contentType  (_ value: ContentType)
         case authorization(_ value: String)
         case contentLength(_ value: Int)
         
@@ -44,7 +44,7 @@ public extension URLRequest {
         
         var value: String {
             switch self {
-            case .contentType(let value): return value.string
+            case .contentType  (let value): return value.string
             case .authorization(let value): return value
             case .contentLength(let value): return value.description
             }
@@ -55,14 +55,14 @@ public extension URLRequest {
     enum ContentType {
         
         // TODO: More types.
-        case textHTML(encoding: String.Encoding)
-        case applicationJSON(encoding: String.Encoding)
+        case textHTML         (encoding: String.Encoding = .utf8)
+        case applicationJSON  (encoding: String.Encoding = .utf8)
         case multipartFormData(boundary: Boundary)
         
         var string: String {
             switch self {
-            case .textHTML(let encoding): return "text/html;charset=\(encoding.httpName)"
-            case .applicationJSON(let encoding): return "application/json;charset=\(encoding.httpName)"
+            case .textHTML         (let encoding): return "text/html;charset=\(encoding.httpName)"
+            case .applicationJSON  (let encoding): return "application/json;charset=\(encoding.httpName)"
             case .multipartFormData(let boundary): return "multipart/form-data;boundary=\(boundary)"
             }
         }
