@@ -102,6 +102,8 @@ public extension WebService {
 // Request publishers.
 public extension WebService {
     
+    // TODO: Check if these two can be combined into one.
+    
     func requestPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(for request: URLRequest, decoder: Decoder, errorDecoder: ErrorDecoder) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
