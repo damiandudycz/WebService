@@ -120,18 +120,10 @@ public extension WebService {
                     if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
                         throw RequestError.apiError(error: decodedError, response: response)
                     }
-                    if let requestError = error as? RequestError {
-                        throw requestError
-                    }
-                    throw RequestError.otherError(error: error)
+                    throw self.requestErrorWith(error: error)
                 }
             }
-            .mapError { (error) -> RequestError in
-                guard let requestError = error as? RequestError else {
-                    return .otherError(error: error)
-                }
-                return requestError
-            }
+            .mapError { self.requestErrorWith(error: $0) }
             .eraseToAnyPublisher()
     }
     
@@ -146,12 +138,7 @@ public extension WebService {
 
         return tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
             .tryMap { (_) in try methodCreator(parameters, token) }
-            .mapError({ (error) -> RequestError in
-                if let error = error as? RequestError {
-                    return error
-                }
-                return .otherError(error: error)
-            })
+            .mapError { self.requestErrorWith(error: $0) }
             .flatMap { $0 }
             .eraseToAnyPublisher()
     }

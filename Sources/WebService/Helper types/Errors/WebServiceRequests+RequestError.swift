@@ -18,5 +18,12 @@ public extension WebService {
         case apiError(error: APIErrorType, response: URLResponse)
         case otherError(error: Error)
     }
+    
+    func requestErrorWith(error: Error) -> RequestError {
+        if let requestError = error as? RequestError {
+            return requestError
+        }
+        return.otherError(error: error)
+    }
 
 }
