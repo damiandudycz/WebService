@@ -9,12 +9,14 @@ import Foundation
 import HandyThings
 
 public extension WebService {
+    
+    typealias ResponseStatus = URLResponse.ResponseStatus
 
     enum RequestError: Error {
         case failedToReadResponse
         case accessTokenNotAvaliable
         case accessTokenInvalid
-        case wrongResponseStatus(status: URLResponse.ResponseStatus)
+        case wrongResponseStatus(status: ResponseStatus)
         case apiError(error: APIErrorType, response: URLResponse)
         case otherError(error: Error)
     }

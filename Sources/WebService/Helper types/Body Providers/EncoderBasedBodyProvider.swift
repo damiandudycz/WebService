@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import Combine
 
-public struct EncoderBasedBodyProvider<Parameters: Encodable, Encoder: BodyEncoder>: BodyProvider {
-    
-    public let parameters: Parameters
-    public let encoder:    Encoder
+public class EncoderBasedBodyProvider<Encoder: TopLevelEncoder, Parameters: Encodable>: BodyProvider where Encoder.Output == Data {
+        
+    let encoder: Encoder
+    let parameters: Parameters
     
     public init(encoder: Encoder, parameters: Parameters) {
         self.encoder = encoder
@@ -18,7 +19,7 @@ public struct EncoderBasedBodyProvider<Parameters: Encodable, Encoder: BodyEncod
     }
     
     public func provideBody() throws -> Data {
-        try encoder.encodeBody(parameters)
+        try encoder.encode(parameters)
     }
-
+    
 }

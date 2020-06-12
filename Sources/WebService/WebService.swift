@@ -33,15 +33,19 @@ private extension WebService {
 
 // Requests.
 public extension WebService {
-        
+    
+    typealias ContentType = URLRequest.ContentType
+    typealias HTTPMethod  = URLRequest.HTTPMethod
+    typealias Header      = URLRequest.Header
+
     func request(
         for function:    String,
         body:            Data? = nil,
-        contentType:     URLRequest.ContentType? = nil,
+        contentType:     ContentType? = nil,
         queryParameters: DictionaryRepresentable? = nil,
         token:           Token? = nil,
-        method:          URLRequest.HTTPMethod = .get,
-        headers:         [URLRequest.Header]? = nil
+        method:          HTTPMethod = .get,
+        headers:         [Header]? = nil
     ) -> URLRequest {
         
         let url: URL = {
@@ -64,7 +68,7 @@ public extension WebService {
         request.method = method
             
         // Prepare all headers
-        let allHeaders: [URLRequest.Header] = {
+        let allHeaders: [Header] = {
             var allHeaders = headers ?? []
             
             if let contentType = contentType {
