@@ -45,18 +45,16 @@ public extension WebService {
     ) -> URLRequest {
         
         let url: URL = {
-            if let queryParameters = queryParameters {
-                // TODO: Try! handle
-                let queryParametersDictionary = try! queryParameters.dictionary()
-                let parametersStrings = queryParametersDictionary.map { (key, value) -> String in
-                    "\(key)=\(value.description.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)"
-                }
-                let string = "?\(parametersStrings.joined(separator: "&"))"
-                return self.url(for: function + string)
-            }
-            else {
+            guard let queryParameters = queryParameters else {
                 return self.url(for: function)
             }
+            // TODO: Try! handle
+            let queryParametersDictionary = try! queryParameters.dictionary()
+            let parametersStrings = queryParametersDictionary.map { (key, value) -> String in
+                "\(key)=\(value.description.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)"
+            }
+            let string = "?\(parametersStrings.joined(separator: "&"))"
+            return self.url(for: function + string)
         }()
         
         print("------------------------------")
