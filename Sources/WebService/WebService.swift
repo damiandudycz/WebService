@@ -147,29 +147,8 @@ public extension WebService {
         token:               Token,
         tokenRefreshCreator: @escaping TokenRefreshCreator
     ) -> RequestPublisher<Result> {
-        // Token verification checks if token needs to be updated. If it does it will create a tokenUpdatePublisher. Otherwise it will creare Just(token).
-        let tokenVerification: TokenPublisher = {
-            guard token.accessToken.isExpired else {
-                return Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
-            }
-            // If token updating publisher exists connect to it, otherwise create a new one.
-            guard let tokenUpdatePublisher = tokenUpdatePublisher else {
-                // Create new publisher for token updating.
-                let newTokenUpdatePublisher = tokenRefreshCreator(token)
-                newTokenUpdatePublisher.sink(receiveCompletion: { (completion) in
-                    self.tokenUpdatePublisher = nil
-                }) { (newToken) in
-                    print("Token was updated to: \(newToken.accessToken)")
-                    token.updateTo(newToken)
-                }.store(in: &self.cancellables)
-                self.tokenUpdatePublisher = newTokenUpdatePublisher
-                return newTokenUpdatePublisher
-            }
-            // Return existing token update publisher.
-            return tokenUpdatePublisher.eraseToAnyPublisher()
-        }()
 
-        return tokenVerification
+        return tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
             .tryMap { (_) in try methodCreator(parameters, token) }
             .mapError({ (error) -> RequestError in
                 if let error = error as? RequestError {
@@ -181,4 +160,29 @@ public extension WebService {
             .eraseToAnyPublisher()
     }
     
+}
+
+private extension WebService {
+    
+    func tokenVerificationPublisher(token: Token, tokenRefreshCreator: @escaping TokenRefreshCreator) -> TokenPublisher {
+        guard token.accessToken.isExpired else {
+            return Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
+        }
+        // If token updating publisher exists connect to it, otherwise create a new one.
+        guard let tokenUpdatePublisher = tokenUpdatePublisher else {
+            // Create new publisher for token updating.
+            let newTokenUpdatePublisher = tokenRefreshCreator(token)
+            newTokenUpdatePublisher.sink(receiveCompletion: { (completion) in
+                self.tokenUpdatePublisher = nil
+            }) { (newToken) in
+                print("Token was updated to: \(newToken.accessToken)")
+                token.updateTo(newToken)
+            }.store(in: &self.cancellables)
+            self.tokenUpdatePublisher = newTokenUpdatePublisher
+            return newTokenUpdatePublisher
+        }
+        // Return existing token update publisher.
+        return tokenUpdatePublisher.eraseToAnyPublisher()
+    }
+
 }
