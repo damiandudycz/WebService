@@ -17,20 +17,10 @@ public protocol MultipartFormConvertable {
 public extension MultipartFormConvertable {
         
     typealias Boundary = UUID
-    
-    // TODO: Different parameters for different types of data.
-    // For example create an enum for Content-Disposition and make it create form fragments.
-    func insert(_ data: Data, boundary: Boundary, name: String, filename: String?, type: URLRequest.ContentType, to body: inout Data) throws {
-        var part = Data()
-        try part.append("\r\n--\(boundary)\r\n")
-        try part.append("Content-Disposition: form-data; name=\"\(name)\"")
-        if let filename = filename {
-            try part.append("; filename=\"\(filename)\"")
-        }
-        try part.append("\r\n")
-        try part.append("Content-Type: \(type.string)\r\n\r\n")
-        part.append(data)
-        body.append(part)
+        
+    func insert(_ content: ContentDisposition, to body: inout Data) throws {
+        let contentData = try content.data()
+        body.append(contentData)
     }
     
     // Finishing form
@@ -38,16 +28,18 @@ public extension MultipartFormConvertable {
         try body.append("\r\n--\(boundary)--\r\n")
     }
     
-    func buildFormBodyForSingleData(_ data: Data, boundary: Boundary, name: String, filename: CustomStringConvertible?, type: URLRequest.ContentType) throws -> Data {
-        var form = Data()
-        try insert(data, boundary: boundary, name: name, filename: filename?.description, type: type, to: &form)
-        try finishForm(&form, boundary: boundary)
-        return form
+    func formBodyWithSingleData(_ data: Data, boundary: Boundary, name: String, filename: String, type: URLRequest.ContentType) throws -> Data {
+        var body = Data()
+        let content: ContentDisposition = .formData(data, boundary: boundary, name: name, filename: filename, type: type)
+        try insert(content, to: &body)
+        try finishForm(&body, boundary: boundary)
+        return body
     }
 
 }
 
-private extension Data {
+// TODO: Move to Extensions/
+extension Data {
     
     enum ConversionError: Error {
         case failedToConvertToData

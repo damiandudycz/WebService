@@ -17,7 +17,7 @@ extension UIImage: MultipartFormConvertable {
         guard let imageData = jpegData(compressionQuality: 1.0) else {
             throw ProvideFormBodyError.failedToConvertImage
         }
-        return try buildFormBodyForSingleData(imageData, boundary: boundary, name: "file", filename: UUID(), type: .image(.jpeg))
+        return try formBodyWithSingleData(imageData, boundary: boundary, name: "file", filename: UUID().uuidString, type: .image(.jpeg))
     }
     
 }
