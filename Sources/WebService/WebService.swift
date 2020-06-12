@@ -64,17 +64,20 @@ public extension WebService {
         request.method = method
             
         // Prepare all headers
-        var allHeaders = headers ?? []
-        
-        if let contentType = contentType {
-            allHeaders.append(.contentType(contentType))
-        }
-        if let token = token {
-            allHeaders.append(.authorization("Bearer \(token.accessToken)"))
-        }
-        if let body = body {
-            allHeaders.append(.contentLength(body.count))
-        }
+        let allHeaders: [URLRequest.Header] = {
+            var allHeaders = headers ?? []
+            
+            if let contentType = contentType {
+                allHeaders.append(.contentType(contentType))
+            }
+            if let token = token {
+                allHeaders.append(.authorization("Bearer \(token.accessToken)"))
+            }
+            if let body = body {
+                allHeaders.append(.contentLength(body.count))
+            }
+            return allHeaders
+        }()
         
         // Add headers to request
         allHeaders.forEach { (header) in
