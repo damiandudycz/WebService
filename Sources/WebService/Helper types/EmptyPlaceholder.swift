@@ -20,17 +20,23 @@ public typealias NoResultDecoder = EmptyPlaceholder // Encoder for NoResult
 public typealias NoParameters    = EmptyPlaceholder // Query or Body parameters
 
 extension EmptyPlaceholder: DictionaryRepresentable {
+
     public func encode(to encoder: Encoder) throws {}
+
 }
 
 extension EmptyPlaceholder: Decodable {
+    
     public init(from decoder: Decoder) throws {
         self = .empty
     }
+    
 }
 
-extension EmptyPlaceholder: TopLevelDecoder {
+extension EmptyPlaceholder: ResultDecoder {
+    
     public func decode<T>(_ type: T.Type, from: Data) throws -> T where T : Decodable {
         EmptyPlaceholder.empty as! T // TODO: Could it be constrained somehow better?
     }
+    
 }
