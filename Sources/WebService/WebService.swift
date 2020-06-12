@@ -87,9 +87,7 @@ public extension WebService {
         }
 
         // Add body
-        if let body = body {
-            request.httpBody = body
-        }
+        request.httpBody = body
                 
         return request
     }
