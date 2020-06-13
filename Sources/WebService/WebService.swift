@@ -6,6 +6,8 @@
 //  Copyright © 2020 Damian Dudycz. All rights reserved.
 //
 
+// TODO: Check Error enums, if they are in correct places and are not redundant.
+
 import Foundation
 import Combine
 import HandyThings
