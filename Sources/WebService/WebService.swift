@@ -15,7 +15,6 @@ import HandyThings
 open class WebService<APIErrorType: Decodable> {
     
     private let baseURL: URL
-    private var cancellables = Set<AnyCancellable>()
     
     public init(_ baseURL: URL) {
         self.baseURL = baseURL
@@ -158,18 +157,17 @@ private extension WebService {
     
     func tokenVerificationPublisher(token: Token, tokenRefreshCreator: @escaping TokenRefreshCreator) -> TokenPublisher {
         guard token.accessToken.isExpired else {
-            return Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
+            return tokenUpdatePublisher ?? Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
         }
         // If token updating publisher exists connect to it, otherwise create a new one.
         guard let tokenUpdatePublisher = tokenUpdatePublisher else {
             // Create new publisher for token updating.
-            let newTokenUpdatePublisher = tokenRefreshCreator(token)
-            newTokenUpdatePublisher.sink(receiveCompletion: { (completion) in
-                self.tokenUpdatePublisher = nil
-            }) { (newToken) in
+            let newTokenUpdatePublisher = tokenRefreshCreator(token).handleEvents(receiveOutput: { (newToken) in
                 print("Token was updated to: \(newToken.accessToken)")
                 token.updateTo(newToken)
-            }.store(in: &self.cancellables)
+            }, receiveCompletion: { (_) in
+                self.tokenUpdatePublisher = nil
+            }).eraseToAnyPublisher()
             self.tokenUpdatePublisher = newTokenUpdatePublisher
             return newTokenUpdatePublisher
         }
