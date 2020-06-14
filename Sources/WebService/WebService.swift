@@ -48,14 +48,14 @@ public extension WebService {
         token:           Token? = nil,
         method:          HTTPMethod = .get,
         headers:         [Header]? = nil
-    ) -> URLRequest {
+    ) throws -> URLRequest {
         
-        let url: URL = {
+        let url: URL = try {
             guard let queryParameters = queryParameters else {
                 return self.url(for: function)
             }
             // TODO: Try! handle
-            let queryParametersDictionary = try! queryParameters.dictionary()
+            let queryParametersDictionary = try queryParameters.dictionary()
             let parametersStrings = queryParametersDictionary.map { (key, value) -> String in
                 "\(key)=\(value.description.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)"
             }
