@@ -9,12 +9,12 @@ import Foundation
 
 extension Token {
     
-    struct JWT: Codable, CustomStringConvertible {
+    public struct JWT: Codable, CustomStringConvertible {
         
-        private let rawValue: String
-        private let accessSegment: AccessSegment // Encoded from raw value.
+        public let rawValue: String
+        public let accessSegment: AccessSegment // Encoded from raw value.
         
-        var description: String {
+        public var description: String {
             rawValue
         }
         
@@ -22,13 +22,13 @@ extension Token {
             Date().timeIntervalSince1970 >= accessSegment.exp
         }
         
-        init(from decoder: Decoder) throws {
+        public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             rawValue = try container.decode(String.self)
             accessSegment = try AccessSegment(rawValue)
         }
         
-        func encode(to encoder: Encoder) throws {
+        public func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             try container.encode(rawValue)
         }
@@ -37,7 +37,7 @@ extension Token {
     
 }
 
-private extension Token.JWT {
+public extension Token.JWT {
     
     struct AccessSegment: Decodable {
         enum AccessSegmentError: Error {

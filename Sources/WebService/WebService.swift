@@ -14,7 +14,7 @@ import HandyThings
 
 open class WebService<APIErrorType: Decodable> {
     
-    private let baseURL: URL
+    public let baseURL: URL
     
     public init(_ baseURL: URL) {
         self.baseURL = baseURL
