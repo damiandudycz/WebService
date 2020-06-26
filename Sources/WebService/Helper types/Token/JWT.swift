@@ -44,7 +44,8 @@ public extension Token.JWT {
             case failedToDecodeAccessSegment
         }
         
-        let exp: TimeInterval
+        public let exp: TimeInterval
+        public let email: String
         
         init(_ jsonString: String) throws {
             func base64Decode(_ base64: String) -> Data? {
@@ -57,6 +58,12 @@ public extension Token.JWT {
                 throw AccessSegmentError.failedToDecodeAccessSegment
             }
             self = try JSONDecoder().decode(AccessSegment.self, from: bodyData)
+            print(self)
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case exp
+            case email = #"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"#
         }
         
     }
