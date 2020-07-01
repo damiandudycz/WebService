@@ -115,6 +115,7 @@ public extension WebService {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
                 do {
+                    print(String(data: data, encoding: .utf8)!)
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
                     }
