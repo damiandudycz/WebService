@@ -61,10 +61,7 @@ public extension WebService {
             let string = "?\(parametersStrings.joined(separator: "&"))"
             return self.url(for: function + string)
         }()
-        
-        print("------------------------------")
-        print("Created request: \(url)")
-        
+                
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
         request.method = method
             
@@ -88,11 +85,6 @@ public extension WebService {
         allHeaders.forEach { (header) in
             request.setValue(header.value, forHTTPHeaderField: header.key)
         }
-        
-        // Print headers
-        if let headers = request.allHTTPHeaderFields {
-            print("Headers: \(headers)")
-        }
 
         // Add body
         request.httpBody = body
@@ -115,7 +107,6 @@ public extension WebService {
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
                 do {
-                    print(String(data: data, encoding: .utf8)!)
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
                     }
@@ -164,7 +155,6 @@ private extension WebService {
         guard let tokenUpdatePublisher = tokenUpdatePublisher else {
             // Create new publisher for token updating.
             let newTokenUpdatePublisher = tokenRefreshCreator(token).handleEvents(receiveOutput: { (newToken) in
-                print("Token was updated to: \(newToken.accessToken)")
                 token.updateTo(newToken)
             }, receiveCompletion: { (_) in
                 self.tokenUpdatePublisher = nil

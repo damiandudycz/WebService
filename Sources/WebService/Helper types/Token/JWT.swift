@@ -58,7 +58,6 @@ public extension Token.JWT {
                 throw AccessSegmentError.failedToDecodeAccessSegment
             }
             self = try JSONDecoder().decode(AccessSegment.self, from: bodyData)
-            print(self)
         }
         
         enum CodingKeys: String, CodingKey {
