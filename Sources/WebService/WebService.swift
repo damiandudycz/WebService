@@ -43,13 +43,14 @@ public extension WebService {
         for function:    String,
         body:            Data? = nil,
         contentType:     ContentType? = nil,
+        customURL:       URL? = nil,
         queryParameters: DictionaryRepresentable? = nil,
         token:           Token? = nil,
         method:          HTTPMethod = .get,
         headers:         [Header]? = nil
     ) throws -> URLRequest {
         
-        let url: URL = try {
+        let url: URL = try customURL ?? {
             guard let queryParameters = queryParameters else {
                 return self.url(for: function)
             }
