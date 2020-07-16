@@ -136,7 +136,7 @@ public extension WebService {
         _ methodCreator:     @escaping RequestPublisherWithTokenCreator<Result, Parameters>,
         parameters:          Parameters,
         token:               Token,
-        tokenRefreshCreator: @escaping TokenRefreshCreator
+        tokenRefreshCreator: TokenRefreshCreator
     ) -> RequestPublisher<Result> {
 
         return tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
@@ -150,16 +150,27 @@ public extension WebService {
 
 private extension WebService {
     
-    func tokenVerificationPublisher(token: Token, tokenRefreshCreator: @escaping TokenRefreshCreator) -> TokenPublisher {
+    func tokenVerificationPublisher(token: Token, tokenRefreshCreator: TokenRefreshCreator) -> TokenPublisher {
         guard token.accessToken.isExpired else {
             return tokenUpdatePublisher ?? Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
         }
         // If token updating publisher exists connect to it, otherwise create a new one.
         guard let tokenUpdatePublisher = tokenUpdatePublisher else {
             // Create new publisher for token updating.
-            let newTokenUpdatePublisher = tokenRefreshCreator(token).handleEvents(receiveOutput: { (newToken) in
+            let newTokenUpdatePublisher = tokenRefreshCreator.function(token).receive(on: DispatchQueue.main).handleEvents(receiveOutput: { (newToken) in
                 token.updateTo(newToken)
-            }, receiveCompletion: { (_) in
+            }, receiveCompletion: { completion in
+                print(completion)
+                switch completion {
+                case .failure(let error):
+                    switch error {
+                    case .wrongResponseStatus(let status) where status == .forbidden:
+                        // Sign out
+                        tokenRefreshCreator.onForbidden?()
+                    default: break
+                    }
+                case .finished: break
+                }
                 self.tokenUpdatePublisher = nil
             }).eraseToAnyPublisher()
             self.tokenUpdatePublisher = newTokenUpdatePublisher
@@ -168,5 +179,5 @@ private extension WebService {
         // Return existing token update publisher.
         return tokenUpdatePublisher.eraseToAnyPublisher()
     }
-
+    
 }
