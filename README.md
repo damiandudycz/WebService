@@ -1,3 +1,3 @@
 # WebService
 
-A description of this package.
+Provides a base for imlpementing a WebService with Token based requests.
