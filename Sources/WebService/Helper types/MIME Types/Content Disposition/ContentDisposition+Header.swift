@@ -12,8 +12,10 @@ public extension ContentDisposition {
     struct Header {
         
         public typealias Boundary = URLRequest.Boundary
-        
+        public typealias ContentType = URLRequest.ContentType
+
         let contentDispositionType: HeaderType
+        let contentType: ContentType?
         
         func data(boundary: Boundary) throws -> Data {
             guard let data = string(boundary: boundary).data(using: .utf8) else {
@@ -23,6 +25,9 @@ public extension ContentDisposition {
         }
         
         private func string(boundary: Boundary) -> String {
+            if let contentType = contentType {
+                return "--\(boundary)\r\nContent-Disposition: \(contentDispositionType.string)\r\nContent-Type: \(contentType.string)\r\n\r\n"
+            }
             return "--\(boundary)\r\nContent-Disposition: \(contentDispositionType.string)\r\n\r\n"
         }
         

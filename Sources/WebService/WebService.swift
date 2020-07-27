@@ -164,9 +164,9 @@ private extension WebService {
                 switch completion {
                 case .failure(let error):
                     switch error {
-                    case .wrongResponseStatus(let status) where status == .forbidden:
+                    case .wrongResponseStatus(let status) where status == .unauthorized:
                         // Sign out
-                        tokenRefreshCreator.onForbidden?()
+                        tokenRefreshCreator.onUnathorized?()
                     default: break
                     }
                 case .finished: break
