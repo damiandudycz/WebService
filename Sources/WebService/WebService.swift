@@ -105,7 +105,7 @@ public extension WebService {
         decoder:      Decoder,
         errorDecoder: ErrorDecoder
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
-        print(request.url)
+        print(request.url!)
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
                 do {
