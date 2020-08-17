@@ -105,11 +105,9 @@ public extension WebService {
         decoder:      Decoder,
         errorDecoder: ErrorDecoder
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
-        print(request.url!)
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
                 do {
-                    print(String(data: data, encoding: .utf8)!)
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
                     }
@@ -160,7 +158,6 @@ private extension WebService {
             let newTokenUpdatePublisher = tokenRefreshCreator.function(token).receive(on: DispatchQueue.main).handleEvents(receiveOutput: { (newToken) in
                 token.updateTo(newToken)
             }, receiveCompletion: { completion in
-                print(completion)
                 switch completion {
                 case .failure(let error):
                     switch error {
