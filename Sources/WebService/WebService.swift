@@ -105,11 +105,19 @@ public extension WebService {
         errorDecoder: ErrorDecoder
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
         print(request.url!)
+        if let body = request.httpBody {
+            if let bodyString = String(data: body, encoding: .utf8) {
+                print(">> \(bodyString)")                
+            }
+            else {
+                print(">> <BINARY DATA> \(body.count) bytes")
+            }
+        }
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
 
-                let responseString = String(data: data, encoding: .utf8)
-                print(responseString!)
+                let responseString = String(data: data, encoding: .utf8)!
+                print("<< \(responseString)")
 
                 do {
                     guard let response = response as? HTTPURLResponse else {
