@@ -54,7 +54,6 @@ public extension WebService {
             guard let queryParameters = queryParameters else {
                 return self.url(for: function)
             }
-            // TODO: Try! handle
             let queryParametersDictionary = try queryParameters.dictionary()
             let parametersStrings = queryParametersDictionary.map { (key, value) -> String in
                 "\(key)=\(value.description.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)"
@@ -105,8 +104,13 @@ public extension WebService {
         decoder:      Decoder,
         errorDecoder: ErrorDecoder
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
+        print(request.url!)
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { (data, response) -> Result in
+
+                let responseString = String(data: data, encoding: .utf8)
+                print(responseString!)
+
                 do {
                     guard let response = response as? HTTPURLResponse else {
                         throw RequestError.failedToReadResponse
