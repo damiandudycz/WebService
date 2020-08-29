@@ -54,7 +54,7 @@ public struct ContentDispositionFileDefinition: ContentDispositionConvertable {
 extension UIImage: ContentDispositionConvertable {
         
     public func contentDisposition() throws -> ContentDisposition {
-        guard let data = jpegData(compressionQuality: 1.0) else {
+        guard let data = jpegData(compressionQuality: 0.75) else {
             throw ContentDispositionConversionError.failedToConvertToData
         }
         return try ContentDispositionDataDefinition(name: "file", filename: UUID().uuidString.appending(".jpg"), contentType: .image(.jpeg), data: data).contentDisposition()
