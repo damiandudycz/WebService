@@ -18,7 +18,7 @@ extension Token {
             rawValue
         }
         
-        var isExpired: Bool {
+        public var isExpired: Bool {
             Date().timeIntervalSince1970 >= accessSegment.exp
         }
         
