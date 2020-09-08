@@ -120,7 +120,7 @@ public extension WebService {
         }
         print("---\n")
         return URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { (data, response) -> Result in
+            .tryMap { [self] (data, response) -> Result in
 
                 print("Response to: \(request.url!)")
                 let responseString = String(data: data, encoding: .utf8)!
@@ -141,10 +141,10 @@ public extension WebService {
                     if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
                         throw RequestError.apiError(error: decodedError, response: response)
                     }
-                    throw self.requestErrorWith(error: error)
+                    throw requestErrorWith(error: error)
                 }
             }
-            .mapError { self.requestErrorWith(error: $0) }
+            .mapError { [self] in requestErrorWith(error: $0) }
             .eraseToAnyPublisher()
     }
     
@@ -159,7 +159,7 @@ public extension WebService {
 
         return tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
             .tryMap { (_) in try methodCreator(parameters, token) }
-            .mapError { self.requestErrorWith(error: $0) }
+            .mapError { [self] in requestErrorWith(error: $0) }
             .flatMap { $0 }
             .eraseToAnyPublisher()
     }

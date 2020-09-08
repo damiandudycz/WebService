@@ -16,8 +16,8 @@ open class Token: Codable {
     private(set) public var refreshToken: String
 
     open func updateTo(_ token: Token) {
-        self.accessToken = token.accessToken
-        self.refreshToken = token.refreshToken
+        accessToken = token.accessToken
+        refreshToken = token.refreshToken
         onUpdate.send()
     }
     
