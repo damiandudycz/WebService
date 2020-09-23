@@ -21,6 +21,7 @@ open class WebService<APIErrorType: Decodable> {
     }
     
     fileprivate var tokenUpdatePublisher: RequestPublisher<Token>?
+    private var tokenUpdatesPromises = [(Result<Token, WebService<APIErrorType>.RequestError>) -> Void]()
     
 }
 
@@ -104,7 +105,8 @@ public extension WebService {
         decoder:      Decoder,
         errorDecoder: ErrorDecoder
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
-        print("New request: \(request.url!)")
+        let randomName = UUID().uuidString
+        print("New request: \(request.url!) \(randomName)")
         if let body = request.httpBody {
             print("Body:")
             if let bodyString = String(data: body, encoding: .utf8) {
@@ -122,9 +124,13 @@ public extension WebService {
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { [self] (data, response) -> Result in
 
-                print("Response to: \(request.url!)")
+                print("Response to: \(request.url!) \(randomName)")
                 let responseString = String(data: data, encoding: .utf8)!
                 print(responseString)
+                if let headers = request.allHTTPHeaderFields {
+                    print("Request Headers:")
+                    print(headers)
+                }
                 print("---\n")
 
                 do {
@@ -173,28 +179,37 @@ private extension WebService {
             return tokenUpdatePublisher ?? Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
         }
         // If token updating publisher exists connect to it, otherwise create a new one.
-        guard let tokenUpdatePublisher = tokenUpdatePublisher else {
+        guard tokenUpdatePublisher != nil else {
             // Create new publisher for token updating.
-            let newTokenUpdatePublisher = tokenRefreshCreator.function(token).receive(on: DispatchQueue.main).handleEvents(receiveOutput: { (newToken) in
+            let newTokenUpdatePublisher = tokenRefreshCreator.function(token).handleEvents(receiveOutput: { (newToken) in
                 token.updateTo(newToken)
             }, receiveCompletion: { completion in
+                let result: Result<Token, RequestError>
                 switch completion {
                 case .failure(let error):
+                    result = .failure(error)
                     switch error {
                     case .wrongResponseStatus(let status) where status == .unauthorized:
                         // Sign out
                         tokenRefreshCreator.onUnathorized?()
                     default: break
                     }
-                case .finished: break
+                case .finished: 
+                    result = .success(token)
                 }
                 self.tokenUpdatePublisher = nil
+                self.tokenUpdatesPromises.forEach { (promise) in
+                    promise(result)
+                }
+                self.tokenUpdatesPromises.removeAll()
             }).eraseToAnyPublisher()
             self.tokenUpdatePublisher = newTokenUpdatePublisher
             return newTokenUpdatePublisher
         }
-        // Return existing token update publisher.
-        return tokenUpdatePublisher.eraseToAnyPublisher()
+        // Collects new requests that require token, so that all can be executed after current token update finishes.
+        return Future<Token, RequestError> { [weak self] (promise) in
+            self?.tokenUpdatesPromises.append(promise)
+        }.eraseToAnyPublisher()
     }
     
 }
