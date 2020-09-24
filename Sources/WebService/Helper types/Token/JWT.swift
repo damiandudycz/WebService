@@ -44,8 +44,15 @@ public extension Token.JWT {
             case failedToDecodeAccessSegment
         }
         
-        public let exp: TimeInterval
+        public enum Role: String, Decodable {
+            case user  = "User"
+            case admin = "Admin"
+            case guest = "Guest"
+        }
+        
+        public let exp:   TimeInterval
         public let email: String
+        public let role:  Role
         
         init(_ jsonString: String) throws {
             func base64Decode(_ base64: String) -> Data? {
@@ -63,6 +70,7 @@ public extension Token.JWT {
         enum CodingKeys: String, CodingKey {
             case exp
             case email = #"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"#
+            case role  = #"http://schemas.microsoft.com/ws/2008/06/identity/claims/role"#
         }
         
     }
