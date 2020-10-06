@@ -36,7 +36,7 @@ extension EmptyPlaceholder: Decodable {
 extension EmptyPlaceholder: ResultDecoder {
     
     public func decode<T>(_ type: T.Type, from: Data) throws -> T where T : Decodable {
-        EmptyPlaceholder.empty as! T // TODO: Could it be constrained somehow better?
+        EmptyPlaceholder.empty as! T
     }
     
 }

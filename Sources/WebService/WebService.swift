@@ -97,9 +97,7 @@ public extension WebService {
 
 // Request publishers.
 public extension WebService {
-    
-    // TODO: Check if these two can be combined into one.
-    
+        
     func requestPublisher<Result: Decodable, Decoder: ResultDecoder, ErrorDecoder: ResultDecoder>(
         for request:  URLRequest,
         decoder:      Decoder,
