@@ -25,7 +25,7 @@ public extension WebService {
         if let requestError = error as? RequestError {
             return requestError
         }
-        return.otherError(error: error)
+        return .otherError(error: error)
     }
 
 }

@@ -11,7 +11,7 @@ import Foundation
 public extension URLRequest {
     
     enum HTTPMethod: String {
-        // Dont change names of these cases, these are defined in REST documentation
+        // Note: Don't change the names of these cases, these are defined in REST documentation
         case get, post, put, delete, patch, head, options, copy, search
     }
     

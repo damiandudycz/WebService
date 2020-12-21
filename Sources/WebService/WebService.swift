@@ -20,7 +20,7 @@ open class WebService<APIErrorType: Decodable> {
         self.baseURL = baseURL
     }
     
-    fileprivate var tokenUpdatePublisher: RequestPublisher<Token>?
+    private var tokenUpdatePublisher: RequestPublisher<Token>?
     private var tokenUpdatesPromises = [(Result<Token, WebService<APIErrorType>.RequestError>) -> Void]()
     
 }
@@ -160,8 +160,7 @@ public extension WebService {
         token:               Token,
         tokenRefreshCreator: TokenRefreshCreator
     ) -> RequestPublisher<Result> {
-
-        return tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
+        tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
             .tryMap { (_) in try methodCreator(parameters, token) }
             .mapError { [self] in requestErrorWith(error: $0) }
             .flatMap { $0 }
