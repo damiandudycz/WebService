@@ -98,7 +98,7 @@ public extension WebService {
 // Request publishers.
 public extension WebService {
         
-    func requestPublisher<Result: Decodable, Decoder: ResultDecoder, ErrorDecoder: ResultDecoder>(
+    func requestPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         for request:  URLRequest,
         decoder:      Decoder,
         errorDecoder: ErrorDecoder
@@ -119,8 +119,9 @@ public extension WebService {
             print(headers)
         }
         print("---\n")
+        
         return URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { [self] (data, response) -> Result in
+            .tryMap { [self] (data, response) -> Data in
 
                 print("Response to: \(request.url!) \(randomName)")
                 let responseString = String(data: data, encoding: .utf8)!
@@ -139,7 +140,7 @@ public extension WebService {
                     guard status.isSuccess else {
                         throw RequestError.wrongResponseStatus(status: status)
                     }
-                    return try decoder.decode(Result.self, from: data)
+                    return data
                 }
                 catch {
                     if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
@@ -148,6 +149,7 @@ public extension WebService {
                     throw requestErrorWith(error: error)
                 }
             }
+            .decode(type: Result.self, decoder: decoder)
             .mapError { [self] in requestErrorWith(error: $0) }
             .eraseToAnyPublisher()
     }
