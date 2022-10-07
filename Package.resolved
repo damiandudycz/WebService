@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "HandyThings",
+        "repositoryURL": "https://github.com/damiandudycz/HandyThings",
+        "state": {
+          "branch": "master",
+          "revision": "c18f85097d41ff9954277f022ebe1302fb290ca7",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
