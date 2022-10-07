@@ -2,7 +2,7 @@
 //  File.swift
 //  
 //
-//  Created by Home Dudycz on 11/06/2020.
+//  Created by Damian Dudycz on 11/06/2020.
 //
 
 import Foundation
@@ -23,8 +23,9 @@ public extension URLRequest {
         case contentLength(_ value: Int)
         case contentMD5   (_ value: String)
         case userAgent    (_ value: String)
-        
-        var key: String {
+        case custom       (name: String, value: String)
+
+        public var key: String {
             switch self {
             case .accept:        return "Accept"
             case .acceptCharset: return "Accept-Charset"
@@ -33,10 +34,11 @@ public extension URLRequest {
             case .contentLength: return "Content-Length"
             case .contentMD5:    return "Content-MD5"
             case .userAgent:     return "User-Agent"
+            case .custom(let name, _): return name
             }
         }
         
-        var value: String {
+        public var value: String {
             switch self {
             case .accept       (let value): return value.string
             case .acceptCharset(let value): return value.httpName
@@ -45,6 +47,7 @@ public extension URLRequest {
             case .contentLength(let value): return value.description
             case .contentMD5   (let value): return value
             case .userAgent    (let value): return value
+            case .custom(_, let name): return name
             }
         }
         

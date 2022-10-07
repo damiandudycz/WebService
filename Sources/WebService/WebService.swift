@@ -1,36 +1,98 @@
 //
 //  WebService.swift
-//  UltronAR
 //
-//  Created by Home Dudycz on 02/01/2020.
-//  Copyright © 2020 Damian Dudycz. All rights reserved.
+//  Created by  on 02/01/2020.
+//  Copyright © 2020 . All rights reserved.
 //
-
-// TODO: Check Error enums, if they are in correct places and are not redundant.
 
 import Foundation
 import Combine
 import HandyThings
 
-open class WebService<APIErrorType: Decodable> {
+open class WebService<TokenType: WebServiceToken, APIErrorType: Decodable> {
     
     public let baseURL: URL
     
     public init(_ baseURL: URL) {
         self.baseURL = baseURL
+        do {
+            self.token = try TokenType.loadFromStorage()
+        }
+        catch {
+            WebService.log("Token not loaded: Error: \(error.localizedDescription)", id: 0)
+        }
+        WebService.log("Loaded token: \(String(describing: self.token))", id: 0)
     }
+        
+    private var tokenUpdatePublisher: AnyCancellable?
+    private var tokenUpdatesPromises = [(Result<TokenType, WebService<TokenType, APIErrorType>.RequestError>) -> Void]()
     
-    private var tokenUpdatePublisher: RequestPublisher<Token>?
-    private var tokenUpdatesPromises = [(Result<Token, WebService<APIErrorType>.RequestError>) -> Void]()
-    
+    @CurrentValue
+    open var token: TokenType? {
+        didSet {
+            if let token = token {
+                token.save()
+                WebService.log("Token saved: \(token)", id: 0)
+            }
+            else if oldValue != nil {
+                do {
+                    try TokenType.deleteFromStorage()
+                }
+                catch {
+                    WebService.log("Token delete failed: \(error.localizedDescription)", id: 0)
+                    print(error)
+                }
+            }
+        }
+    }
+    open func getFreshAccessToken(oldToken: TokenType) -> RequestPublisher<TokenType> {
+        fatalError("Please override implementation. Suggest to use a method from container that returns new token.")
+    }
+
 }
 
 private extension WebService {
 
     func url(for function: String) -> URL {
-        URL(string: baseURL.absoluteString.appending("/" + function))!
+        var allowedQueryParamAndKey = NSCharacterSet.urlQueryAllowed
+        allowedQueryParamAndKey.remove(charactersIn: ";:@+$, ")
+        return URL(string: baseURL.absoluteString.appending("/" + (function.addingPercentEncoding(withAllowedCharacters: allowedQueryParamAndKey) ?? function)))!
     }
+    
+}
 
+public extension WebService {
+    static var logFileURL: URL {
+        func getDocumentsDirectory() -> URL {
+            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+            return paths[0]
+        }
+        return getDocumentsDirectory().appendingPathComponent("WebService.log")
+    }
+    static func log(_ string: CustomStringConvertible, id: Int, lineSpacing: Bool = false) {
+        let log: String
+        if #available(iOS 15.0, *) {
+            log = "[WS \(id)] [\(Date().ISO8601Format())] " + string.description
+        } else {
+            log = "[WS \(id)] [\(Date().description)] " + string.description
+        }
+        print(log)
+        do {
+            guard let data = ((lineSpacing ? "\n" : "") + log + "\n").data(using: .utf8) else {
+                throw Data.ConversionError.failedToConvertToData
+            }
+            if FileManager.default.fileExists(atPath: logFileURL.path) {
+                let fileHandle = try FileHandle(forWritingTo: logFileURL)
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+                fileHandle.closeFile()
+            } else {
+                try data.write(to: logFileURL, options: .atomicWrite)
+            }
+        } catch {
+            print("[WS] Failed to store log!")
+        }
+    }
 }
 
 // Requests.
@@ -46,9 +108,10 @@ public extension WebService {
         contentType:     ContentType? = nil,
         customURL:       URL? = nil,
         queryParameters: DictionaryRepresentable? = nil,
-        token:           Token? = nil,
+        token:           TokenType? = nil,
         method:          HTTPMethod = .get,
-        headers:         [Header]? = nil
+        headers:         [Header]? = nil,
+        timeout:         TimeInterval
     ) throws -> URLRequest {
         
         let url: URL = try customURL ?? {
@@ -57,13 +120,18 @@ public extension WebService {
             }
             let queryParametersDictionary = try queryParameters.dictionary()
             let parametersStrings = queryParametersDictionary.map { (key, value) -> String in
-                "\(key)=\(value.description.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)"
+                if let values = value as? [CustomStringConvertible] {
+                    return "\(key)=\(values.map(\.description).joined(separator: "&\(key)="))"
+                }
+                else {
+                    return "\(key)=\(value.description)"
+                }
             }
             let string = "?\(parametersStrings.joined(separator: "&"))"
             return self.url(for: function + string)
         }()
                 
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: timeout)
         request.method = method
             
         // Prepare all headers
@@ -72,9 +140,6 @@ public extension WebService {
             
             if let contentType = contentType {
                 allHeaders.append(.contentType(contentType))
-            }
-            if let token = token {
-                allHeaders.append(.authorization("Bearer \(token.accessToken)"))
             }
             if let body = body {
                 allHeaders.append(.contentLength(body.count))
@@ -89,6 +154,8 @@ public extension WebService {
 
         // Add body
         request.httpBody = body
+        
+        token?.authorizeRequest(&request)
                 
         return request
     }
@@ -101,114 +168,326 @@ public extension WebService {
     func requestPublisher<Result: Decodable, Decoder: TopLevelDecoder, ErrorDecoder: TopLevelDecoder>(
         for request:  URLRequest,
         decoder:      Decoder,
-        errorDecoder: ErrorDecoder
+        errorDecoder: ErrorDecoder,
+        reqid: Int, funct: String // TODO: Delete after testing
     ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
-        let randomName = UUID().uuidString
-        print("New request: \(request.url!) \(randomName)")
+        if let headers = request.allHTTPHeaderFields {
+            Self.log("  > Set headers: \(headers)", id: reqid)
+        }
         if let body = request.httpBody {
-            print("Body:")
             if let bodyString = String(data: body, encoding: .utf8) {
-                print(bodyString)
+                Self.log("  > Set body: \(bodyString)", id: reqid)
             }
             else {
-                print("<BINARY DATA> \(body.count) bytes")
+                Self.log("  > Set body: <BINARY DATA> \(body.count) bytes", id: reqid)
             }
         }
-        if let headers = request.allHTTPHeaderFields {
-            print("Headers:")
-            print(headers)
+        
+        func handleError<Result>(_ error: Error, data: Data, response: URLResponse) throws -> Result {
+            if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
+                throw RequestError.apiError(error: decodedError, response: response)
+            }
+            if let error = error as? RequestError {
+                throw error
+            }
+            throw error
         }
-        print("---\n")
         
         return URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { [self] (data, response) -> Data in
-
-                print("Response to: \(request.url!) \(randomName)")
-                let responseString = String(data: data, encoding: .utf8)!
-                print(responseString)
-                if let headers = request.allHTTPHeaderFields {
-                    print("Request Headers:")
-                    print(headers)
-                }
-                print("---\n")
-
+            .tryMap { (data, response) throws -> Result in
                 do {
-                    guard let response = response as? HTTPURLResponse else {
-                        throw RequestError.failedToReadResponse
+                    Self.log("<<< Response to: \"\(funct)\" [\((response as! HTTPURLResponse).status)]", id: reqid)
+
+                    if !data.isEmpty {
+                        if let string = String(data: data, encoding: .utf8) {
+                            Self.log("  < Received data: " + string, id: reqid)
+                        }
+                        else {
+                            Self.log("  < Received data: " + "<BINARY DATA> \(data.count) bytes", id: reqid)
+                        }
                     }
-                    let status = response.status
-                    guard status.isSuccess else {
-                        throw RequestError.wrongResponseStatus(status: status)
+                    guard response.status.isSuccess else {
+                        throw RequestError.wrongResponseStatus(status: response.status)
                     }
-                    return data
+                    return try decoder.decode(Result.self, from: data)
                 }
                 catch {
-                    if let decodedError = try? errorDecoder.decode(APIErrorType.self, from: data) {
-                        throw RequestError.apiError(error: decodedError, response: response)
-                    }
-                    throw requestErrorWith(error: error)
+                    print("ERROR: \(error.localizedDescription)")
+                    return try handleError(error, data: data, response: response)
                 }
             }
-            .decode(type: Result.self, decoder: decoder)
-            .mapError { [self] in requestErrorWith(error: $0) }
+            .mapError(requestErrorWith)
             .eraseToAnyPublisher()
     }
     
     // Request publishers for Token Based API.
     /// This function will automatically obtain and store new access token if current token is expired.
-    func requestPublisherWithFreshToken<Result: Decodable, Parameters>(
-        _ methodCreator:     @escaping RequestPublisherWithTokenCreator<Result, Parameters>,
-        parameters:          Parameters,
-        token:               Token,
-        tokenRefreshCreator: TokenRefreshCreator
+    func requestPublisherWithFreshToken<Result: Decodable>(
+        _ methodCreator:     @escaping RequestPublisherWithTokenCreator<Result>,
+        token:               TokenType,
+        tokenRefreshCreator: TokenRefreshCreator,
+        requestTimeout:      TimeInterval,
+        reqid:               Int
     ) -> RequestPublisher<Result> {
-        tokenVerificationPublisher(token: token, tokenRefreshCreator: tokenRefreshCreator)
-            .tryMap { (_) in try methodCreator(parameters, token) }
-            .mapError { [self] in requestErrorWith(error: $0) }
+        
+        if !token.isExpired(timeOffset: requestTimeout) {
+            Self.log("  ! Token OK.", id: reqid)
+            return Just(token)
+                .tryMap(methodCreator)
+                .mapError(requestErrorWith)
+                .flatMap { $0 }
+                .eraseToAnyPublisher()
+        }
+        
+        let tokenRefreshAwaitPublisher = Future<TokenType, RequestError> { [self] (promise) in
+            tokenUpdatesPromises.append(promise)
+        }
+        
+        // If there is no publisher for getting new token, create and store one. Otherwise, just ignore
+        if tokenUpdatePublisher == nil {
+            Self.log("  ! Starting new token update.", id: reqid)
+            tokenUpdatePublisher = tokenRefreshCreator.function(token)
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        switch error {
+                        case .wrongResponseStatus(let status) where status == .badRequest:
+                            // Sign out
+                            tokenRefreshCreator.onDenay?()
+                        case let .apiError(_, response) where response.status == .badRequest:
+                            tokenRefreshCreator.onDenay?()
+                        default: break
+                        }
+                        self.tokenUpdatesPromises.forEach { (promise) in
+                            promise(.failure(error))
+                        }
+                    }
+                    self.tokenUpdatePublisher = nil
+                    self.tokenUpdatesPromises.removeAll()
+                }, receiveValue: { token in
+                    self.token = token
+                    self.tokenUpdatesPromises.forEach { (promise) in
+                        promise(.success(token))
+                    }
+                })
+        }
+        else {
+            Self.log("  ! Token update in progress.", id: reqid)
+        }
+        
+        return tokenRefreshAwaitPublisher
+            .tryMap(methodCreator)
+            .mapError(requestErrorWith)
             .flatMap { $0 }
             .eraseToAnyPublisher()
     }
     
 }
 
-private extension WebService {
+extension WebService {
+
+    open class APIContainer<WebServiceType: WebService> {
+        
+        // Alisases
+        public typealias Boundary         = URLRequest.Boundary
+        public typealias HTTPMethod       = WebService.HTTPMethod
+        public typealias Header           = WebService.Header
+        public typealias ContentType      = WebService.ContentType
+        public typealias RequestPublisher = WebService.RequestPublisher
+
+        private(set) public unowned var webService: WebServiceType!
+        
+        public init(webService: WebServiceType) {
+            self.webService = webService
+        }
+        
+    }
+
+}
+
+// Decoders / Encoders
+private let globalJSONDecoder: JSONDecoder = {
+    // Date sometimes is formatter with miliseconds, so we use two formatters
+    let dateFormatter = ISO8601DateFormatter()
+    let dateFormatterWithMS = ISO8601DateFormatter()
+    dateFormatter.formatOptions = [.withInternetDateTime]
+    dateFormatterWithMS.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .custom({ decoder in
+        let dateString = try decoder.singleValueContainer().decode(String.self)
+        if let date = dateFormatter.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterWithMS.date(from: dateString) {
+            return date
+        }
+        throw DecodingError.dataCorrupted(
+            .init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Failed to decode ISO8601 date from \(dateString)",
+                underlyingError: nil
+            )
+        )
+    })
+    return decoder
+}()
+private let globalJSONEncoder = JSONEncoder()
+
+public extension WebService.APIContainer {
+
+    var jsonDecoder:     JSONDecoder { globalJSONDecoder }
+    var jsonEncoder:     JSONEncoder { globalJSONEncoder }
+    var noResultDecoder: NoResultDecoder { .empty }
     
-    func tokenVerificationPublisher(token: Token, tokenRefreshCreator: TokenRefreshCreator) -> TokenPublisher {
-        guard token.accessToken.isExpired else {
-            return tokenUpdatePublisher ?? Just(token).mapError { _ in .accessTokenInvalid }.eraseToAnyPublisher()
-        }
-        // If token updating publisher exists connect to it, otherwise create a new one.
-        guard tokenUpdatePublisher != nil else {
-            // Create new publisher for token updating.
-            let newTokenUpdatePublisher = tokenRefreshCreator.function(token).handleEvents(receiveOutput: { (newToken) in
-                token.updateTo(newToken)
-            }, receiveCompletion: { completion in
-                let result: Result<Token, RequestError>
-                switch completion {
-                case .failure(let error):
-                    result = .failure(error)
-                    switch error {
-                    case .wrongResponseStatus(let status) where status == .unauthorized:
-                        // Sign out
-                        tokenRefreshCreator.onUnathorized?()
-                    default: break
-                    }
-                case .finished: 
-                    result = .success(token)
-                }
-                self.tokenUpdatePublisher = nil
-                self.tokenUpdatesPromises.forEach { (promise) in
-                    promise(result)
-                }
-                self.tokenUpdatesPromises.removeAll()
-            }).eraseToAnyPublisher()
-            self.tokenUpdatePublisher = newTokenUpdatePublisher
-            return newTokenUpdatePublisher
-        }
-        // Collects new requests that require token, so that all can be executed after current token update finishes.
-        return Future<Token, RequestError> { [weak self] (promise) in
-            self?.tokenUpdatesPromises.append(promise)
-        }.eraseToAnyPublisher()
+    // Body content / Parameters
+    var noParameters: NoParameters? { nil }
+    
+    func jsonBodyProvider<Parameters: Encodable>(_ parameters: Parameters) -> BodyProvider {
+        EncoderBasedBodyProvider(encoder: jsonEncoder, parameters: parameters)
     }
     
+    func multipartFormBodyProvider(boundary: Boundary = Boundary(), parts: ContentDispositionConvertable...) -> MultipartForm {
+        MultipartForm(boundary: boundary, parts: parts)
+    }
+
+    func multipartFormBodyProvider(boundary: Boundary = Boundary(), parts: [ContentDispositionConvertable]) -> MultipartForm {
+        MultipartForm(boundary: boundary, parts: parts)
+    }
+    
+    // Publisher
+    func constructPublisher<ErrorDecoder: TopLevelDecoder>(
+
+        endpoint:        String,
+        method:          HTTPMethod = .get,
+        headers:         [Header]? = nil,
+        customURL:       URL? = nil,
+        timeout:         TimeInterval = 30,
+
+        contentType:     ContentType? = .application(.json, encoding: .utf8),
+
+        queryParameters: DictionaryRepresentable? = nil,
+        bodyProvider:    BodyProvider? = nil,
+
+        errorDecoder:    ErrorDecoder,
+
+        requiresToken:   Bool = false
+
+    ) -> RequestPublisher<NoResult> where ErrorDecoder.Input == Data {
+        constructPublisher(endpoint: endpoint, method: method, headers: headers, customURL: customURL, timeout: timeout, contentType: contentType, queryParameters: queryParameters, bodyProvider: bodyProvider, decoder: noResultDecoder, errorDecoder: errorDecoder, requiresToken: requiresToken)
+    }
+    
+    // Publisher
+    func constructPublisher(
+
+        endpoint:        String,
+        method:          HTTPMethod = .get,
+        headers:         [Header]? = nil,
+        customURL:       URL? = nil,
+        timeout:         TimeInterval = 30,
+        
+        contentType:     ContentType? = .application(.json, encoding: .utf8),
+
+        queryParameters: DictionaryRepresentable? = nil,
+        bodyProvider:    BodyProvider? = nil,
+
+        requiresToken:   Bool = false
+
+    ) -> RequestPublisher<NoResult> {
+        constructPublisher(endpoint: endpoint, method: method, headers: headers, customURL: customURL, timeout: timeout, contentType: contentType, queryParameters: queryParameters, bodyProvider: bodyProvider, errorDecoder: globalJSONDecoder, requiresToken: requiresToken)
+    }
+    
+    // Publisher
+    func constructPublisher<
+        Result:       Decodable,
+        Decoder:      TopLevelDecoder,
+        ErrorDecoder: TopLevelDecoder>(
+
+        endpoint:        String,
+        method:          HTTPMethod = .get,
+        headers:         [Header]? = nil,
+        customURL:       URL? = nil,
+        timeout:         TimeInterval = 30,
+
+        contentType:     ContentType? = .application(.json, encoding: .utf8),
+
+        queryParameters: DictionaryRepresentable? = nil,
+        bodyProvider:    BodyProvider? = nil,
+
+        decoder:         Decoder,
+        errorDecoder:    ErrorDecoder,
+
+        requiresToken:   Bool = false
+
+    ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
+        let reqid = wsreqid
+        wsreqid += 1
+
+        do {
+            WebService.log(">>> Preparing new request [\(method.rawValue.uppercased())] [\(requiresToken ? "Secure" : "Open")] \"\(endpoint)\"", id: reqid)
+            if let queryParameters = queryParameters {
+                WebService.log("  > Set query parameters: \(try queryParameters.dictionary())", id: reqid)
+            }
+            if let customURL = customURL {
+                WebService.log("  > Set custom url: \(customURL)", id: reqid)
+            }
+            
+            func methodCreator<Result: Decodable>(_ token: TokenType?) throws -> RequestPublisher<Result> {
+                let body = try bodyProvider?.provideBody()
+                let request = try webService.request(for: endpoint, body: body, contentType: contentType, customURL: customURL, queryParameters: queryParameters, token: token, method: method, headers: headers, timeout: timeout)
+                return webService.requestPublisher(for: request, decoder: decoder, errorDecoder: errorDecoder, reqid: reqid, funct: endpoint)
+            }
+
+            if requiresToken {
+                guard let token = webService.token else {
+                    WebService.log("<<< Fail: \(RequestPublisher<Result>.Failure.accessTokenNotAvaliable)", id: reqid)
+                    return Fail(error: .accessTokenNotAvaliable).eraseToAnyPublisher()
+                }
+                let tokenRefreshCreator: WebService.TokenRefreshCreator = (function: webService.getFreshAccessToken, onDenay: { [self] in
+                    WebService.log("  ! Token refresh denyed", id: reqid)
+                    webService.token = nil
+                })
+                return webService.requestPublisherWithFreshToken(methodCreator, token: token, tokenRefreshCreator: tokenRefreshCreator, requestTimeout: timeout, reqid: reqid)
+            }
+            else {
+                return try methodCreator(nil)
+            }
+        }
+        catch {
+            WebService.log("<<< Failure: \(error)", id: reqid)
+            return Fail(error: .otherError(error: error)).eraseToAnyPublisher()
+        }
+    }
+    
+    func constructTestingPublisher<
+        Result:       Decodable,
+        Decoder:      TopLevelDecoder,
+        ErrorDecoder: TopLevelDecoder>(
+            fakeResponse:    String,
+            decoder:         Decoder,
+            errorDecoder:    ErrorDecoder
+        ) -> RequestPublisher<Result> where Decoder.Input == Data, ErrorDecoder.Input == Data {
+            guard let data = fakeResponse.data(using: .utf8) else {
+                return Fail(error: .otherError(error: Data.ConversionError.failedToConvertToData)).eraseToAnyPublisher()
+            }
+            
+            return Just(fakeResponse)
+                .tryMap { (fakeResponse) throws -> Result in
+                    try decoder.decode(Result.self, from: data)
+                }
+                .mapError(webService.requestErrorWith)
+                .eraseToAnyPublisher()
+            
+        }
 }
+
+public protocol WebServiceToken {
+    // Is this token still valid - if it is it will not require getting new token
+//    var authorizationString: String { get }
+    func isExpired(timeOffset: TimeInterval) -> Bool
+    func save()
+    func authorizeRequest(_ request: inout URLRequest)
+    static func deleteFromStorage() throws
+    static func loadFromStorage() throws -> Self?
+}
+
+private var wsreqid = 1

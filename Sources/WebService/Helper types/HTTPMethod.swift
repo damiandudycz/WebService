@@ -2,8 +2,8 @@
 //  HTTPMethod.swift
 //  NetworkOperation
 //
-//  Created by Damian Dudycz on 28.09.2018.
-//  Copyright © 2018 Damian Dudycz. All rights reserved.
+//  Created by  on 28.09.2018.
+//  Copyright © 2018 . All rights reserved.
 //
 
 import Foundation

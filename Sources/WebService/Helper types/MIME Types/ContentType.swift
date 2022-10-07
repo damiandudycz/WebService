@@ -2,7 +2,7 @@
 //  File.swift
 //  
 //
-//  Created by Home Dudycz on 11/06/2020.
+//  Created by Damian Dudycz on 11/06/2020.
 //
 
 import Foundation
@@ -11,7 +11,7 @@ public extension URLRequest {
     
     enum ContentType {
         
-        case multipart  (_ type: MultipartType, boundary: Boundary)
+        case multipart  (_ type: MultipartType, boundary: Boundary? = nil)
         case application(_ type: ApplicationType = .octetStream, encoding: String.Encoding = .utf8)
         case text       (_ type: TextType = .plain, encoding: String.Encoding = .utf8)
         case image      (_ type: ImageType)
@@ -19,9 +19,15 @@ public extension URLRequest {
         case video      (_ type: VideoType)
         case model      (_ type: ModelType)
         
-        var string: String {
+        public var string: String {
             switch self {
-            case let .multipart  (type, boundary): return "multipart/\(type.rawValue);boundary=\(boundary)"
+            case let .multipart  (type, boundary):
+                if let boundary = boundary {
+                    return "multipart/\(type.rawValue);boundary=\(boundary)"
+                }
+                else {
+                    return "multipart/\(type.rawValue)"
+                }
             case let .application(type, encoding): return "application/\(type.rawValue);charset=\(encoding.httpName)"
             case let .text       (type, encoding): return "text/\(type.rawValue);charset=\(encoding.httpName)"
             case let .image      (type):           return "image/\(type.rawValue)"

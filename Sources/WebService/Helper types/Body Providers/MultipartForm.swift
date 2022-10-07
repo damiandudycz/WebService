@@ -2,11 +2,10 @@
 //  File.swift
 //  
 //
-//  Created by Home Dudycz on 11/06/2020.
+//  Created by Damian Dudycz on 11/06/2020.
 //
 
 import Foundation
-import HandyThings
 
 public class MultipartForm: BodyProvider {
     
@@ -28,8 +27,8 @@ public class MultipartForm: BodyProvider {
         bodyParts.forEach { body.append($0) }
         
         // Finish form
-        try body.append("\r\n--\(boundary)--\r\n")
-                
+        try body.append("--\(boundary)--\r\n")
+                        
         return body
     }
 

@@ -2,7 +2,7 @@
 //  File.swift
 //  
 //
-//  Created by Home Dudycz on 09/06/2020.
+//  Created by Damian Dudycz on 09/06/2020.
 //
 
 import Foundation
@@ -11,8 +11,7 @@ import Combine
 public extension WebService {
     
     typealias RequestPublisher<Result> = AnyPublisher<Result, RequestError>
-    typealias TokenPublisher = RequestPublisher<Token>
-    typealias TokenRefreshCreator = (function: (_ token: Token) -> TokenPublisher, onUnathorized: (() -> Void)?)
-    typealias RequestPublisherWithTokenCreator<Result, Parameters> = (_ parameters: Parameters, _ token: Token) throws -> RequestPublisher<Result>
-    
+    typealias TokenPublisher = RequestPublisher<TokenType>
+    typealias TokenRefreshCreator = (function: (_ oldToken: TokenType) -> TokenPublisher, onDenay: (() -> Void)?)
+    typealias RequestPublisherWithTokenCreator<Result> = (_ token: TokenType) throws -> RequestPublisher<Result>
 }

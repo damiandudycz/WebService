@@ -1,8 +1,8 @@
 //
 //  File.swift
-//  
 //
-//  Created by Home Dudycz on 12/06/2020.
+//
+//  Created by Damian Dudycz on 12/06/2020.
 //
 
 import UIKit
@@ -11,11 +11,11 @@ public struct ContentDispositionDataDefinition: ContentDispositionConvertable {
     
     /// Form name
     let name:        String
-    let filename:    String
+    let filename:    String?
     let contentType: URLRequest.ContentType?
     let data:        Data
     
-    public init(name: String, filename: String, contentType: URLRequest.ContentType?, data: Data) {
+    public init(name: String, filename: String? = nil, contentType: URLRequest.ContentType?, data: Data) {
         self.name = name
         self.filename = filename
         self.contentType = contentType
@@ -54,18 +54,26 @@ public struct ContentDispositionFileDefinition: ContentDispositionConvertable {
 extension UIImage: ContentDispositionConvertable {
         
     public func contentDisposition() throws -> ContentDisposition {
+        try contentDisposition(fieldName: "file")
+    }
+    
+    public func contentDisposition(fieldName: String) throws -> ContentDisposition {
         guard let data = jpegData(compressionQuality: 0.75) else {
             throw ContentDispositionConversionError.failedToConvertToData
         }
-        return try ContentDispositionDataDefinition(name: "file", filename: UUID().uuidString.appending(".jpg"), contentType: .image(.jpeg), data: data).contentDisposition()
+        return try ContentDispositionDataDefinition(name: fieldName, filename: UUID().uuidString.appending(".jpg"), contentType: .image(.jpeg), data: data).contentDisposition()
     }
     
 }
 
 extension Data: ContentDispositionConvertable {
-    
+        
     public func contentDisposition() throws -> ContentDisposition {
-        try ContentDispositionDataDefinition(name: "file", filename: UUID().uuidString, contentType: nil, data: self).contentDisposition()
+        try contentDisposition(fieldName: "file")
+    }
+    
+    public func contentDisposition(fieldName: String) throws -> ContentDisposition {
+        try ContentDispositionDataDefinition(name: fieldName, contentType: nil, data: self).contentDisposition()
     }
     
 }
